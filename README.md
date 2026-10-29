@@ -182,6 +182,16 @@ Airlock") doors.
 14. **Duplicate tiny helpers, don't import.** A 10-line `parse_thing()` repeated
     in a few files beats a shared module the runner can't resolve. Keep helpers
     that small.
+15. **Ad-hoc inline probes must follow the SAME chat discipline as scripts.**
+    The Bartender round: while debugging clean clicks, inline `run_script`
+    probes called `sk.read_chat(limit=15)` and kept only the last few lines -
+    every other line (a patron SCREAMING in the bar) was consumed and dropped,
+    so nothing surfaced in any envelope afterwards. The chat buffer is
+    destructive: any read eats the lines it returns. In probes, either call
+    `common/check.py` (accumulates + parses `heard`), or replicate `_pull_chat`
+    (accumulate EVERYTHING into a list and return it whole - never slice
+    `[-N:]` before reading it yourself). If you caught yourself writing
+    `read_chat(...).split()[-N:]` in a probe, that is the bug.
 
 ## 2.5 tgui semantics traps (source-verified, cost real damage)
 
