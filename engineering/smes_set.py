@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Set a SMES ("power storage unit") input/output via its tgui window.
 Fork defaults: input 200 kW (max), output 190 kW.
 
@@ -28,4 +33,8 @@ if win:
     m = re.search(r'"charge":\s*([\d.]+)', d)
     out["charge"] = float(m.group(1)) if m else None
     out["ok"] = out["inputting"] and out["outputting"]
-out
+RESULT = (out)
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

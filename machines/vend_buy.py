@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Buy items from a vending machine (NanoMed/NanoDrug/...): empty-hand click to
 open the tgui, then vend by ref (premium flag for premium rows).
 
@@ -46,4 +51,8 @@ for b in buy:
     fell = "falls onto the floor" in t
     res.append({"ref": b["ref"], "vended": bool(ok), "on_floor": fell})
 time.sleep(0.3)
-{"ok": all(r["vended"] for r in res), "results": res}
+RESULT = ({"ok": all(r["vended"] for r in res), "results": res})
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

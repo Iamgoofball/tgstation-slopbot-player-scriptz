@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Pull (grab) a thing so it follows you: the shift+right-click context menu's
 "Pull" verb. The SDK can't click Dream Seeker's popup menu, so the script
 invokes the same verb: `Pull` on the command line, then answers the target
@@ -77,4 +82,8 @@ s = sk.search(query="", in_view=True).text or ""
 for l in s.split("\n"):
     if re.match(r"- obj %d " % oid, l):
         out["pos"] = l[:130]
-out
+RESULT = (out)
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

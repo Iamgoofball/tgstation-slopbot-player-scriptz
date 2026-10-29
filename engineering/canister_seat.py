@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Seat a gas canister onto an omni connector port: pull it (ctrl-click), walk
 next to the port tile, drag it onto the port tile, then wrench it (wrench from
 toolbelt via belt click) and verify portConnected=1 in the canister tgui.
@@ -62,4 +67,8 @@ if opts.get("wrench", True):
     # stow wrench back? leave in hand-free: put away via belt click
     sk.click(object_id=int(m.group(1)), expect_name="wrench")
     time.sleep(0.6)
-out
+RESULT = (out)
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Toggle/set one gas pump, valve, bypass or filter by NAME (must be in view).
 Ctrl-click = on/off, alt-click = pressure to 4500 kPa (source-verified fork truth).
 
@@ -41,4 +46,8 @@ if want_max:
     res["max_ok"] = bool(re.search(r"4500|pressure output", t, re.I)) or "4500" in t
 out.update(res)
 out["ok"] = (res["on_ok"] or not want_on is not None) and (res["max_ok"] or not want_max)
-out
+RESULT = (out)
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

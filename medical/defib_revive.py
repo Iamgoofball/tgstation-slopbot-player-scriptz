@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Defib a dead patient via wall mount (the proven route): gate on the scan,
 fetch paddles from the mount, wield, combat off, not pulling, shock, verify.
 
@@ -136,4 +141,8 @@ out["zapped_puller"] = bool(re.search(r"shock|electrocut", t, re.I)) and not out
 after = scan()
 out["after"] = {k: after.get(k) for k in ("health", "dead", "brute", "burn", "tox", "oxy")}
 out["ok"] = out["resus"]
-out
+RESULT = (out)
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

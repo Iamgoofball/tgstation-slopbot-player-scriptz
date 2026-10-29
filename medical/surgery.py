@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Run ONE radial-menu surgery op on a mob: ensure the tool is in the active
 hand, (optionally re-drape), click the patient, parse the radial from the click
 answer, click the op button immediately, wait, verify via chat.
@@ -120,4 +125,8 @@ else:
     out["chat"] = [l[:140] for l in ch.split("\n")
                    if re.search(r"succeed|fail|begin|surger|remov|graft|repair", l, re.I)][:6]
     out["ok"] = bool(out["chat"])
-out
+RESULT = (out)
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

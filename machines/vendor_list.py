@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Open a vending machine (empty active hand) and return its product rows.
 
 Run: run_script {script: "E:/byond_agent_test/tgstation-slopbot-player-scriptz/machines/vendor_list.py",
@@ -35,5 +40,9 @@ for name_, cr, ref in rows:
     if pat and not re.search(pat, name_, re.I):
         continue
     out.append({"name": name_.strip()[:44], "cr": cr, "ref": ref})
-{"ok": bool(out) or len(rows) > 0, "rows": out[:10],
- "raw_len": len(t), "note": "no match filter -> rows shows first hits; widen 'match'"}
+RESULT = ({"ok": bool(out) or len(rows) > 0, "rows": out[:10],
+ "raw_len": len(t), "note": "no match filter -> rows shows first hits; widen 'match'"})
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

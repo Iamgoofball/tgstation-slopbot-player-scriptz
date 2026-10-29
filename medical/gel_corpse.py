@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Spray medigel on a corpse to bring its damage under the defib threshold.
 
 Run: run_script {script: "E:/byond_agent_test/tgstation-slopbot-player-scriptz/medical/gel_corpse.py",
@@ -100,4 +105,8 @@ if "health analyzer" in (sk.inventory().text or "").lower():
     out["scan"] = scan
 out["empty"] = empty
 out["ok"] = out["sprayed"] > 0
-out
+RESULT = (out)
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

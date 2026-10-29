@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Read several machines' tgui state in one envelope (walks to each, opens,
 parses the JSON data). With `actions` (per id) it also APPLIES tgui actions and
 re-reads the state after.
@@ -90,4 +95,8 @@ for oid in ids:
             except Exception:
                 pass
 out["ok"] = all(v.get("win") or v.get("error") for v in out["results"].values())
-out
+RESULT = (out)
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

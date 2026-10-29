@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Take one medical item from a container UI (or floor) and apply it to a mob.
 
 Run: run_script {script: "E:/byond_agent_test/tgstation-slopbot-player-scriptz/medical/apply_medkit_item.py",
@@ -59,6 +64,10 @@ c = sk.click(object_id=mob, expect_name=opts.get("mob_name"))
 t = c.text or ""
 time.sleep(1.3)  # stacks apply ~1 s per use
 m = re.search(r"\(x (\d+)\)", cur or "")
-{"ok": bool(re.search(r"suture|apply|patch|mesh|gauze|begin|inject", t, re.I))
+RESULT = ({"ok": bool(re.search(r"suture|apply|patch|mesh|gauze|begin|inject", t, re.I))
        and "refuse" not in t.lower(),
- "item": iid, "uses": int(m.group(1)) if m else None, "chat": t[-140:]}
+ "item": iid, "uses": int(m.group(1)) if m else None, "chat": t[-140:]})
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Turn ON emitters one at a time, from beside/behind each (never from in
 front — the beam does 30 burn per hit), with a SAFETY WATCHDOG between each:
 reads chat + status, and ABORTS immediately if the supermatter starts
@@ -51,4 +56,8 @@ for oid in ids:
     out["emitters"].append(rec)
     watch("emitter %s" % oid)     # ABORT remaining emitters on any danger sign
 out["ok"] = all(x.get("beam") or x.get("off") or turn_off for x in out["emitters"]) if out["emitters"] else False
-out
+RESULT = (out)
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

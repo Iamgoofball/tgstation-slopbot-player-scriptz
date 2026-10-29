@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Take a SPECIFIC tool from a surgery tray (RMB opens the picker; LMB grabs a
 random tool — avoid LMB unless you feel lucky).
 
@@ -34,3 +39,7 @@ else:
     inv = (sk.inventory().text or "")
     got = [l.strip()[:90] for l in inv.split("\n") if str(target) in l]
     {"ok": bool(got), "tool": tool, "id": target, "slot": (got[0] if got else None)}
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

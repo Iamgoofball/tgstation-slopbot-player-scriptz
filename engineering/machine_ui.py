@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Open ANY machine's tgui window by id (walks adjacent first), return its
 parsed state keys compactly, and optionally apply tgui actions.
 
@@ -53,4 +58,8 @@ if win:
         out["parse"] = str(ex)[:80]
         out["raw"] = d[:500]
 out["ok"] = bool(win)
-out
+RESULT = (out)
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

@@ -17,6 +17,15 @@ run_script {script: "E:/byond_agent_test/tgstation-slopbot-player-scriptz/medica
 
 ## 1. THE SAFETY WATCHDOG — MANDATORY (engine delam cost us Lennox Fields)
 
+**Every script now self-checks at start**: a 4-line header at the top of every
+script loads `common/watch_prelude.py` and calls `precheck()` — chat + status
+are read BEFORE anything else, and the script aborts (SystemExit) on danger
+(delam, countdown, blast, flood, fire, shock, attack, ghost/crit/dead status).
+**`common/check.py` and `common/watch_prelude.py` are the only files without
+it.** Mid-script checks still use the embedded `watch()` between steps; the
+agent must still read the returned digest and re-check with `common/check.py`
+between run_script envelopes.
+
 **Every script that does more than one world-affecting step MUST check chat and
 status between steps, and ABORT (raise `SystemExit`) the moment anything bad
 appears.** "Bad" includes: supermatter delamination/integrity warnings, any
@@ -225,10 +234,10 @@ Every script in this repo:
 | Folder | Purpose |
 | --- | --- |
 | `setup/` | Session bootstrap: load the map, snapshot the session state |
-| `common/check.py` | **ONE-CALL situational check**: recent chat + your status + what's around you (+ danger words). Run between actions, before new areas, whenever anything surprises you — this is how you notice attacks, delams, floods and instructions BEFORE they cost you. |
+| `common/check.py` | **ONE-CALL situational check**: recent chat + your status + what's around you (+ danger words). Run between actions, before new areas, whenever anything surprises you — this is how you notice attacks, delams, floods and instructions BEFORE they cost you. Also parses **`heard`** (everything anyone said on radio or locally: who/verb/text/channel/mine) and **`needs_response`** (someone addressed you, your job, or asked a question — answer on the radio before the next action). |
 | `lifecycle/` | Ghost out, respawn (admin override), join the round as a job |
 | `movement/` | Walk to areas/tiles, haul a pulled mob somewhere and place it |
-| `inventory/` | Hands & containers: drop, open, take, equip to HUD slots |
+| `inventory/` | Hands & containers: drop, open, take, equip to HUD slots, **quick_equip** (E — stores into containers when the slot is occupied, never swaps!), toggle worn-slot display |
 | `machines/` | Vendor purchases, surgery-tray tool grabs |
 | `medical/` | Analyze, treat, medipen, bed placement, defib revival, radial-menu surgery, heal-to-full flows |
 | `engineering/` | Supermatter engine loop setup (omni pumps/filters, freezers, air alarm), SMES, emitters, NT CIMS reads, canister seating (pull.py/wrench.py), **delam_response.py emergency playbook**. See its index.md for this fork's omni-device truths. |

@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Setup an engine air alarm's devices: stage "vents" turns OFF the external
 pressure limit on every vent (never set vents to siphon!); stage "scrubbers"
 sets every scrubber to siphon + expanded range. Fork truth: only siphon once
@@ -42,4 +47,8 @@ else:
         a = sk.tgui_act(id=win, action="widenet", params={"ref": r, "val": 1}); time.sleep(0.4)
         out["scrubbers"].append({"ref": r, "sent": "sent" in (a.text or "")})
     out["ok"] = len(out["scrubbers"]) > 0
-out
+RESULT = (out)
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

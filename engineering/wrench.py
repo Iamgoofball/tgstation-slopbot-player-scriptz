@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Wrench a thing with the wrench from the toolbelt: opens the belt
 (alt-click), takes the wrench into the active hand, clicks the target, stows
 the wrench back into the belt.
@@ -52,4 +57,8 @@ sk.click(object_id=belt, alt=True, expect_name="toolbelt")
 time.sleep(0.8)
 sk.click(object_id=wid, expect_name="wrench")     # belt item click stores it
 time.sleep(0.6)
-out
+RESULT = (out)
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

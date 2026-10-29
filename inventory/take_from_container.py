@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Take one item out of an OPEN container UI into a hand, verify, report slot.
 
 Run: run_script {script: ".../inventory/take_from_container.py",
@@ -31,4 +36,8 @@ sk.click(object_id=iid, expect_name=iname)
 time.sleep(0.5)
 act, other = hand_items()
 got = [l for l in act + other if str(iid) in l]
-{"ok": bool(got), "slot": (got[0] if got else None), "other": other[:1]}
+RESULT = ({"ok": bool(got), "slot": (got[0] if got else None), "other": other[:1]})
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

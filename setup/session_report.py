@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Compact "where am I, what do I hold, what's open" snapshot.
 
 Run: run_script {script: ".../setup/session_report.py"}
@@ -13,8 +18,12 @@ def st(pat):
     return "absent"
 w = sk.tgui_windows().text or ""
 open_wins = re.findall(r"(\S+):\n", w)
-{"ok": True,
+RESULT = ({"ok": True,
  "you": (sk.status().get("you") or "")[:90],
  "active": (act[0][:90] if act else "none"),
  "combat": st("combat mode"), "pull": st("stop pulling"),
- "windows": open_wins[:4]}
+ "windows": open_wins[:4]})
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

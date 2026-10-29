@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """One-envelope heal loop: scan a patient, apply sutures (brute) / regen mesh
 (burn) from a medkit until clean or items run out, re-scan, return deltas.
 
@@ -137,7 +142,11 @@ for _ in range(int(opts.get("max_rounds", 6))):
     if (after.get("brute") or 0) == 0 and (after.get("burn") or 0) == 0:
         log.append("clean"); break
 keys = ("health", "brute", "burn", "tox", "oxy")
-{"ok": (after.get("brute") or 0) == 0 and (after.get("burn") or 0) == 0,
+RESULT = ({"ok": (after.get("brute") or 0) == 0 and (after.get("burn") or 0) == 0,
  "before": {k: before.get(k) for k in keys},
  "after": {k: after.get(k) for k in keys + ("blood",)},
- "rounds": rounds, "log": log}
+ "rounds": rounds, "log": log})
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

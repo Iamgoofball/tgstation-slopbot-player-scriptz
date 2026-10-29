@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Survey machines around one or more spots: walks to each (x, y), pages
 through the in-view search, and returns the filtered machinery list (id, name,
 tile, area, state). The agent reads this once per room instead of eyeballing.
@@ -51,4 +56,8 @@ out["machines"] = ["obj %d %s @ %s [%s] %s" % (k, v[0], v[1], v[2], v[3])
                    for k, v in sorted(seen.items())][: opts.get("max", 60)]
 out["n"] = len(seen)
 out["you"] = (sk.status().get("you") or "")[:90]
-out
+RESULT = (out)
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

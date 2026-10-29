@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """EMERGENCY delamination response, one envelope. Order matters (learned the
 hard way — Lennox Fields RIP):
 1. Kill the beams (emitters off) — stops new energy instantly.
@@ -95,4 +100,8 @@ for cid in canisters:
     watch("after canister %s" % cid)
 
 out["next"] = "agent: re-run cims_read.py; if integrity still falling and no countdown -> flee 10+ tiles (sk.move) away from the crystal NOW"
-out
+RESULT = (out)
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Grab a mob (Ctrl+click = pull in this fork), haul it to a destination, and
 optionally place it onto an object (operating table / stasis unit = buckle).
 
@@ -58,4 +63,8 @@ else:
         time.sleep(0.5)
         out["followed"] = bool(mob_line())
     out["ok"] = bool(out.get("grabbed")) and (onto_id is None or bool(out.get("placed")))
-out
+RESULT = (out)
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

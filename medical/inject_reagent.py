@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Draw a reagent from a container with a syringe, then inject it into a mob.
 
 Run: run_script {script: "E:/byond_agent_test/tgstation-slopbot-player-scriptz/medical/inject_reagent.py",
@@ -109,4 +114,8 @@ for _ in range(inject_n):
         break
     time.sleep(2.5)  # target injects have a do_after delay
 out["ok"] = out["injected"] > 0
-out
+RESULT = (out)
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

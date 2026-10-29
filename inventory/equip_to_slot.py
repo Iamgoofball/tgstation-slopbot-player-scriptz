@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Equip a held item to a HUD slot (click the slot button with it in the active
 hand) — or remove a worn item by dragging it onto a turf (careful: bags DUMP
 their contents instead of coming off; true removal needs a StripMenu via
@@ -30,3 +35,7 @@ else:
     d = sk.drag(object_id=iid, onto_x=x, onto_y=y)
     {"ok": True, "answer": (d.text or "")[:160],
      "warn": "bags dump contents to the turf instead of coming off"}
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

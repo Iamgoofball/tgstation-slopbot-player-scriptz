@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Toggle the worn-inventory slot display (the "toggle" button at the bottom
 left of the HUD, state=toggle at WEST:6,SOUTH:5). Worn slots (suit, head,
 gloves...) are hidden by default; clicking the button reveals them, after
@@ -28,4 +33,8 @@ out["clicked"] = ("clicked: obj %d" % out["found"]) in (c.text or "")
 inv = (sk.inventory().text or "")
 out["worn_visible"] = bool(re.search(r"in slot \"(suit storage|head|gloves|wear_suit)\"", inv, re.I))
 out["ok"] = out["clicked"]
-out
+RESULT = (out)
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

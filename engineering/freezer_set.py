@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Set a Temperature control unit (freezer) to a target temperature via tgui.
 Do NOT alt-click a freezer: the first alt-click sets it to 573 K (heating)!
 
@@ -34,4 +39,8 @@ if win:
     m = re.search(r'"target":\s*([\d.]+)', d)
     out["target"] = float(m.group(1)) if m else None
     out["ok"] = bool(out["on"]) and out["target"] is not None and abs(out["target"] - float(target)) < 1
-out
+RESULT = (out)
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}

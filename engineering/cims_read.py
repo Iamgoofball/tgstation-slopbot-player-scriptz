@@ -1,3 +1,8 @@
+# === SAFETY PRECHECK (scriptz README section 1): abort on danger before anything ===
+import os as _os
+_d = _os.path.dirname(_os.path.abspath(__file__))
+exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
+precheck()
 """Read the Supermatter via NT CIMS (PDA program, tgui — no chat parsing).
 Opens the PDA (NtOS), runs the "ntcims" program, refreshes, parses sm_data[0].
 
@@ -116,4 +121,8 @@ if pl:
     bpk = (args or {}).get("backpack", 174628)
     sk.click(object_id=bpk, expect_name="backpack")
     time.sleep(0.6)
-out
+RESULT = (out)
+
+# === END CHECK (scriptz: full sit-rep after every script) ===
+END_CHECK = postcheck()
+{"result": RESULT, "end_check": END_CHECK}
