@@ -11,7 +11,7 @@ listed here too.
 | `smes_set.py` | `id`, `input_w?`, `output_w?` | Smes window: input 200 kW (max), output 190 kW; verifies `inputAttempt/outputAttempt`. |
 | `cims_read.py` | — | NT CIMS from the PDA (no need to hold it): integrity, energy (GeV), gas temp vs temp_limit, moles, gas %, zap MW. Healthy: 100 / 1.3-1.6 GeV / 70-85 K / ~14 mol / ~97% N2. |
 | `emitters_on.py` | `ids` | Click each emitter on from beside/behind (never in front: 30 burn/hit), verify "Emitting one beam" per examine. |
-| `air_alarm_setup.py` | `id`, `stage` | `vents`: external limit OFF (never siphon vents). `scrubbers`: siphon + widenet — **only when CIMS reads >8 mol and >90% N2**, else you vacuum the chamber. |
+| `air_alarm_setup.py` | `id`, `stage`, `ext_pressure`=101 | `vents`: external limit CHECK off (**XOR quirk: excheck val=1 clears, val=0 is a no-op**) + external target set to `ext_pressure` (NEVER 0 with the check on — the vent then never pumps; cost us the whole N2 load once). `scrubbers`: widenet — **siphon only when CIMS reads >8 mol and >90% N2**, else you vacuum the chamber. |
 | `ui_batch.py` | `ids`, `actions?` | Open many machines' tgui in one envelope; read `data` (filter_types compressed to enabled gases); per-id `actions` (e.g. `[{"action":"power"},{"action":"pressure","params":{"pressure":4500}}]`) then re-reads. Empty active hand! |
 | `machine_ui.py` | `id`, `actions?` | Single machine: walk adjacent, open, parse, act. |
 | `survey_machines.py` | `spots`, `only?` | Walk spots, page in-view search, return filtered machinery list. |
