@@ -82,6 +82,20 @@ classic blind spot where the before-digest used to swallow it) can never be
 lost. The agent MUST read that section on every envelope and answer
 `needs_response` lines before continuing work.
 
+### View census is built into precheck/postcheck (common/watch_prelude.py)
+
+Speech isn't the only blind signal: **dangers that never reach the chat log**
+(fires, hostile mobs, hull breaches, plasma) are caught by a cheap **ASCII
+view census** in `_view_census()` — one `search(query="", in_view=True)` per
+check. Every precheck/postcheck/watch now returns (and pre/post/watch ABORT
+on) `view.threats` — objects in view matching `VIEW_THREAT` (fire-not-alarm,
+plasma, singulo, blob, xenomorph, breach, tesla, ...) — plus `view.areas`
+(sorted area names in view) and `view.mobs` (other mobs nearby). The area
+list is also the fastest way to *navigate*: if an area name shows up in the
+census (e.g. a docked "Emergency Shuttle"), `bot.goto(area=...)` reaches it
+in one call — this is how the round-end shuttle was finally boarded after
+name-searches kept missing its misnamed ("Departure Lounge Airlock") doors.
+
 ---
 
 ## 1. How scripts run
