@@ -9,7 +9,14 @@ re-reads the state after.
 
 Run: run_script {script: ".../engineering/ui_batch.py", args: {"ids": [37890],
   "actions": {"37890": [{"action": "power"}, {"action": "pressure", "params": {"pressure": 4500}}]}}
-Returns {results: {id: {win, data|raw, actions?, after?}}, ok}. Empty active hand!
+Optional: {"set_states": {id: {"field": "on", "goal": true,
+  "act_on": {"action": "power"}, "act_off": {"action": "power"}}}} —
+  STATE-CHECKED apply: read field first, act ONLY if it differs from goal
+  (toggles are not idempotent — blind acts caused both emitter mistakes),
+  then re-read to verify. Entries may instead be {"field","goal","action"}
+  for symmetric toggles with params.
+Returns {results: {id: {win, data|raw, set_states?, actions?, after?}}, ok}.
+Empty active hand!
 """
 import json
 import re
@@ -23,7 +30,7 @@ if not ids and not actions:
 DANGER = (r"delaminat|integrity|countdown|blast|explod|detonat|flood|fire|"
           r"electroc|shock|attack|husk|bomb|causality|warning|emergency|toxin")
 def watch(tag=""):
-    ch = re.sub(r"<[^>]+>", " ", sk.read_chat(wait_s=1).text or "")
+    ch = re.sub(r"<[^>]+>", " ", _pull_chat())
     hits = re.findall(r"[^\n]{0,60}(?:%s)[^\n]{0,60}" % DANGER, ch, re.I)
     if hits:
         raise SystemExit("ABORT danger %s: %s" % (tag, hits[-2:]))
@@ -78,6 +85,25 @@ for oid in ids:
         rec.update(read())
         am = re.search(r"actions: (.*?)action_params_in_data", (sk.tgui_window(id=win).text or ""), re.S)
         rec["actions"] = (am.group(1).strip()[:160] if am else "")
+        ss = (opts.get("set_states") or {}).get(str(oid))
+        if ss:
+            def fget():
+                d2 = sk.tgui_window(id=win).text or ""
+                m2 = re.search(r'"' + ss["field"] + r'":\s*(1|0|true|false)', d2)
+                return (m2.group(1) in ("1", "true")) if m2 else None
+            cur = fget()
+            goal = bool(ss.get("goal", True))
+            rec["set_states"] = {"field": ss["field"], "before": cur,
+                                 "acted": (cur is None or cur != goal)}
+            if cur is None or cur != goal:
+                spec = ss.get("act_on") if goal else ss.get("act_off")
+                if spec is None and ss.get("action"):
+                    spec = {"action": ss["action"], "params": ss.get("params")}
+                if spec:
+                    sk.tgui_act(id=win, action=spec["action"], params=spec.get("params") or {})
+                    time.sleep(0.8)
+            rec["set_states"]["after"] = fget()
+            rec["set_states"]["ok"] = (rec["set_states"]["after"] == goal)
         for act in actions.get(str(oid)) or []:
             a = sk.tgui_act(id=win, action=act["action"], params=act.get("params") or {})
             time.sleep(0.6)
