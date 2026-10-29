@@ -69,6 +69,19 @@ Rules attached to it:
    the next script** — the watchdog inside scripts catches what happens
    DURING a script; the agent owns everything between scripts.
 
+### Speech check is built into run_script itself (seeker-mcp)
+
+Every `run_script` envelope now carries a **speech check from the wrapper**:
+the runner snapshots chat before AND after each run and appends an explicit
+`── Speech (since last run — READ THIS) ──` text section (and
+`structuredContent.speech = {between, during, needs_response}`) listing
+everything anyone said since the previous envelope — parsed into
+`{who, text, channel, mine}`. `needs_response` flags questions/imperatives/
+mentions of our name. This means speech that arrived BETWEEN envelopes (the
+classic blind spot where the before-digest used to swallow it) can never be
+lost. The agent MUST read that section on every envelope and answer
+`needs_response` lines before continuing work.
+
 ---
 
 ## 1. How scripts run
