@@ -44,6 +44,13 @@ def _hand_item():
     return m.group(2) if m else "unknown"
 
 
+def _held_somewhere(name):
+    """True if the item is already in EITHER hand (active or not)."""
+    inv = (sk.inventory().text or "")
+    return bool(re.search(r'"[^"]*' + re.escape(name) + r'[^"]*"\][^:]*\n|'
+                          r'- obj \d+ "[^"]*' + re.escape(name), inv))
+
+
 def _find(name, query, in_view=True, exact=False):
     s = (sk.search(query=query, in_view=in_view).text or "")
     pat = (r'- (?:obj|mob) (\d+) "([^"]*)"' if exact else
@@ -68,27 +75,42 @@ if cm and "combat_off" not in cm[0]:
 out["combat"] = [l.strip()[:60] for l in
                  [x for x in (sk.status().text or "").split("\n") if "combat" in x.lower()]][:1]
 
-# ---- pick up the item (exact name first, then substring; in view > known) ----
-iid, iname, ipos = _find(item_name, item_name, True, exact=True)
-if not iid:
-    iid, iname, ipos = _find(item_name, item_name, True)
-if not iid:
-    iid, iname, ipos = _find(item_name, item_name, False, exact=True)
-if not iid:
-    iid, iname, ipos = _find(item_name, item_name, False)
-if not iid:
-    raise RuntimeError("item not found: " + item_name)
-# in view is NOT in reach: interaction range ~1 tile, so ALWAYS walk adjacent
-if ipos:
-    bot.goto(x=ipos[0], y=ipos[1]); time.sleep(0.4)   # goto falls back to a free tile
-    iid, iname, ipos = _find(item_name, item_name, True) or (iid, iname, ipos)
-if _hand_item() is not None:
-    sk.key(key="X"); time.sleep(0.6)
+# ---- pick up the item: EXACT name wins at any distance; substring only
+#      as a last resort. A near "broken space beer" must not beat a far
+#      "space beer" - that is how John got TWO broken bottles. ----
+held = _hand_item()
+if _held_somewhere(item_name):
+    holding = True
+    if held is None or item_name[:6] not in (held or "").lower():
+        sk.key(key="X"); time.sleep(0.6)   # bring it to the active hand
+    held = _hand_item()
+else:
+    holding = False
+if not holding:
+    iid, iname, ipos = _find(item_name, item_name, True, exact=True)
+    if not iid:
+        iid, iname, ipos = _find(item_name, item_name, False, exact=True)
+    if not iid:
+        iid, iname, ipos = _find(item_name, item_name, True)
+    if not iid:
+        iid, iname, ipos = _find(item_name, item_name, False)
+    if not iid:
+        raise RuntimeError("item not found: " + item_name)
+    if "broken" in iname.lower() and "broken" not in item_name.lower():
+        raise RuntimeError('refusing to fetch "%s" for "%s" (exact stock exhausted?)'
+                           % (iname, item_name))
+    # in view is NOT in reach: interaction range ~1 tile, so ALWAYS walk adjacent
+    if ipos:
+        bot.goto(x=ipos[0], y=ipos[1]); time.sleep(0.4)   # goto falls back to a free tile
+        iid, iname, ipos = _find(item_name, item_name, True) or (iid, iname, ipos)
     if _hand_item() is not None:
-        raise RuntimeError("both hands full, cannot pick up " + item_name)
-sk.click(object_id=iid, expect_name=(iname or item_name)[:40]); time.sleep(0.8)
-if item_name[:6] not in (_hand_item() or "").lower():
-    raise RuntimeError("pickup failed, holding: " + str(_hand_item()))
+        sk.key(key="X"); time.sleep(0.6)
+        if _hand_item() is not None:
+            raise RuntimeError("both hands full, cannot pick up " + item_name)
+    sk.click(object_id=iid, expect_name=(iname or item_name)[:40]); time.sleep(0.8)
+    if item_name[:6] not in (_hand_item() or "").lower():
+        raise RuntimeError("pickup failed, holding: " + str(_hand_item()))
+out["item_held"] = (held if holding else _hand_item()) or item_name
 
 # ---- serve: table mode (set it on a table next to them) or G offer ----
 if opts.get("table"):

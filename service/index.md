@@ -27,7 +27,17 @@ Gotchas
 - Vend drops the bottle INTO an empty active hand (does not fall to the
   floor); with both hands full it drops at the vendor's feet - that is how a
   buggy run left bottles scattered, and why the stocker checks the hand
-  before and after every vend.
+  before and after every vend. serve_item treats "already in either hand"
+  as holding (vend -> serve without a re-fetch).
+- serve_item fetch priority: EXACT name at any distance beats a substring
+  match next to you - a near "broken space beer" once beat a far "space
+  beer" and a drunk patron got a second broken bottle. The script now also
+  refuses a substring fetch whose name adds "broken" (stock exhausted ->
+  vend fresh instead).
+- Table mode's success check is weak: it confirms the hand emptied + SOME
+  item of that name is in view - a pre-existing one can false-positive.
+  After a table serve, verify by searching for the item NEAR THE TABLE TILE
+  you clicked, or by a chat "You place ..." line.
 - While you work, patrons talk/scream/act. Every script's postcheck surfaces
   `heard` - READ IT, don't just read the `result`. A scream you ignore is a
   customer you failed (see README 2 #15: inline probes once ate the evidence).
