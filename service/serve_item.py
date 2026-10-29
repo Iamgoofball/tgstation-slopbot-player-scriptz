@@ -45,10 +45,24 @@ def _hand_item():
 
 
 def _held_somewhere(name):
-    """True if the item is already in EITHER hand (active or not)."""
+    """True if the item is already in EITHER hand (active or not). Parses the
+    "- obj N \"name\" [state]: in slot \"left/right hand\"" lines directly -
+    a regex OR chain missed names that carry a state suffix (e.g. a drink
+    renamed to its recipe, \"Screwdriver\" [screwdriverglass])."""
     inv = (sk.inventory().text or "")
-    return bool(re.search(r'"[^"]*' + re.escape(name) + r'[^"]*"\][^:]*\n|'
-                          r'- obj \d+ "[^"]*' + re.escape(name), inv))
+    for m in re.finditer(r'- obj (\d+) "([^"]*)"[^\n]*in slot "(left|right) hand"', inv):
+        if name.lower() in m.group(2).lower():
+            return True
+    return False
+
+
+def _late_acceptance(name):
+    """True if the chat log already shows the patron taking this item
+    ('X takes NAME from Y'). An offer can land LONG after the 'did not
+    transfer' verdict - the patron's acceptance arrives between runs.
+    Never re-offer an accepted drink."""
+    log = "\n".join(_RAW_LOG)
+    return bool(re.search(r'takes[^\n]*%s[^\n]*from|%s[^\n]*from' % (re.escape(name), re.escape(name)), log, re.I))
 
 
 def _find(name, query, in_view=True, exact=False):
@@ -110,6 +124,9 @@ if not holding:
     sk.click(object_id=iid, expect_name=(iname or item_name)[:40]); time.sleep(0.8)
     if item_name[:6] not in (_hand_item() or "").lower():
         raise RuntimeError("pickup failed, holding: " + str(_hand_item()))
+if _late_acceptance(item_name) and not opts.get("table"):
+    raise RuntimeError("%s was already taken from us (check chat before "
+                       "re-serving; accepted offers land late)" % item_name)
 out["item_held"] = (held if holding else _hand_item()) or item_name
 
 # ---- serve: table mode (set it on a table next to them) or G offer ----
