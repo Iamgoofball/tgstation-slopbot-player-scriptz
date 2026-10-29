@@ -2,7 +2,14 @@
 import os as _os
 _d = _os.path.dirname(_os.path.abspath(__file__))
 exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
-precheck()
+# respawn.py STARTS AS A GHOST by design (Respawn is a ghost verb) — the shared
+# precheck() aborts on "[ghost]" status, so use a chat-only danger check here.
+# postcheck() at the end is fine: by then we expect a living/new-player status.
+_sit = _sitrep()
+_raw = " ".join(str(h.get("text") or h.get("raw") or "") for h in _sit["heard"])
+_bad = re.findall(r"[^\n]{0,70}(?:%s)[^\n]{0,70}" % DANGER, _raw, re.I)
+if _bad:
+    raise SystemExit("PRECHECK ABORT: %s" % _bad[-2:])
 """Respawn into a new body (verb Respawn; answers the admin-override prompt Yes).
 
 Run: run_script {script: ".../lifecycle/respawn.py", args: {"choice": "Yes"}}

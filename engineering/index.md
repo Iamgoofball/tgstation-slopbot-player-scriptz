@@ -4,11 +4,20 @@ Supermatter engine + power grid helpers. All are generic: pass machine **names
 or ids** as args, never hard-code. Fork truths baked into each script are
 listed here too.
 
+**NtOS consoles remember their last program**: a program window
+(NtPowerMonitor, NtosSupermatter…) has NO `programs` list in its data — send
+`PC_exit` up to 3× to get back to NtosMain before running any program.
+`cims_console` / `power_monitor_report` assume a fresh NtosMain on click;
+`job_scriptz/station-engineer/shift_start_report.py` handles the leftover case.
+
 | Script | Args | Purpose |
 | --- | --- | --- |
 | `pump_set.py` | `name`, `on?`, `max?` | Ctrl-click (on/off) + alt-click (4500 kPa) one pump/valve/bypass/filter by name, in view. |
 | `freezer_set.py` | `id` or `name`, `target?` | Temperature control unit → `power` + `target` via tgui (engine: 73.15 K). **Never alt-click a freezer** — first alt-click = 573 K heating. |
 | `smes_set.py` | `id`, `input_w?`, `output_w?` | Smes window: input 200 kW (max), output 190 kW; verifies `inputAttempt/outputAttempt`. |
+| `smes_read.py` | `id` | Read-ONLY Smes window: charge %, input/output attempt flags, `inputAvailable`/`outputUsed`. Closes stale non-Smes windows first (the stale-APC-as-SMES trap). Pair with `smes_set.py` for writes. |
+| `power_monitor_report.py` | `computer`, `x?`,`y?`, `limit?`=12 | Read-only AmpCheck (`PC_runprogram {name:"ampcheck"}`) on the Power Monitoring NtOS console: supply/demand strings + the per-area table read via **`tgui_window path:"data.areas"`** (149 entries `{name, charge, load, charging, eqp, lgt, env}`; the state block only says "list of 149"). Returns the N lowest-charge areas — the "who is about to go dark" overview. Close EVERY window first: a stale Smes window at tgui-window-1 swallows the click; stand adjacent (x,y). |
+| `apc_channel.py` | `apc`, `set`=`{"eqp"\|"lgt"\|"env": 1\|2\|3}`, `breaker?`, `charge?`, `nightshift?` | State-checked APC control, verified both directions. **Unlock = RIGHT-click the APC with the ID in a hand** (any hand; maptext hints "[RMB] Toggle interface lock"); LMB with the ID in the ACTIVE hand is also a swipe (toggles — don't chain them), so swap (X) to make the active hand empty before the opening LMB click. Channels live in `data.powerChannels[]` (`title` Equipment/Lighting/Environment → `eqp/lgt/env`, `status` 1 off / 2 on / 3 auto); action `channel {key: n}`; parse only inside the `"data": {` block — `config.window.locked` (always 0) would false-match. Retries once after a re-swipe when an act doesn't take. Also `breaker` (`isOperating`), `charge`, `nightshift`. |
 | `cims_read.py` | — | NT CIMS from the PDA (no need to hold it): integrity, energy (GeV), gas temp vs temp_limit, moles, gas %, zap MW. Healthy: 100 / 1.3-1.6 GeV / 70-85 K / ~14 mol / ~97% N2. **PDA-dependent — the battery dies and takes the program with it; prefer cims_console.py.** |
 | `cims_console.py` | `computer`, `x?`,`y?` | CIMS via the SMES-room **NtOS engineering console** (`PC_runprogram {name:"ntcims"}`) — PDA-independent. Must stand NEXT to the console (2 tiles = view-only, reads still work; 3-5 disabled). `computer` is REQUIRED (ids change every round — survey_machines.py finds it). Empty active hand! |
 | `cims_watch.py` | `computer?`, `gap_s?`=20 | TWO CIMS reads + delta → `trend`: healing / stable / **destabilizing** (act!). A single read can't tell healing from falling — deltas are ground truth. |

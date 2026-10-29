@@ -8,7 +8,7 @@ precheck()
 Run: run_script {script: ".../movement/goto_area.py", args: {"area": "Medbay Central"}}"""
 opts = args or {}
 area = opts.get("area") or ValueError("args: {'area': 'Medbay Central'}")
-walk = bot.goto_area(area)
+walk = bot.goto_area(area, max_steps=int((args or {}).get("max_steps", 80)))
 after = sk.status()
 RESULT = ({"ok": not walk.failed, "area": area, "answer": (walk.text or "")[:160],
  "now": (after.get("you") or "")[:80], "rev": after.rev})

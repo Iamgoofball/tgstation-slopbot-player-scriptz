@@ -10,7 +10,7 @@
 # View checks (the "view census"): chat alone misses NEXT-TILE dangers that
 # never reach the log — fires, hostile mobs, hull breaches, gas. Both checks
 # scan the ASCII view (areas + mobs + threat objects) and abort/report.
-VIEW_THREAT = (r"\bfire\b(?!\s*(?:lock|alarm|axe|extinguisher|sensor|locker))|"
+VIEW_THREAT = (r"\bfire\b(?!\s*[-]?\s*(?:lock|alarm|axe|extinguisher|sensor|locker|safety|closet|door))|"
                r"burning plasma|plasma fire|plasma leak|"
                r"fireball|singularity|singulo|\bblob\b|blobbernaut|"
                r"xenomorph|alien (?:hunter|sentinel|drone|queen|praetorian)|"
@@ -44,7 +44,18 @@ def _view_census():
                      for a in m.group(1).split(";") if a.strip()]
     mobs = [m.groups() for l in lines for m in
             [re.search(r"- mob (\d+) \"([^\"]+)\" at (\d+,\d+)", l)] if m]
-    threats = [l[:110] for l in lines if re.search(VIEW_THREAT, l, re.I)][:6]
+    # threat scan on the line WITHOUT its [icon-state] metadata tags — the
+    # literal tag "[fire]" on a fire-alarm line is not a fire. Also cut a
+    # firelock's boilerplate help text ("(closed: a firelock (fire door): it
+    # closed by itself because ... (fire) ... (a breach ...)") — the advice
+    # names fire and breach as literal words and is not itself a threat.
+    def _scan(l):
+        i = l.find("(closed: a firelock")
+        if i > -1:
+            l = l[:i]
+        return re.sub(r"\[[^\]]*\]", "", l)
+    threats = [l[:110] for l in lines
+               if re.search(VIEW_THREAT, _scan(l), re.I)][:6]
     st = (sk.status().text or "")
     me = re.search(r"you: mob (\d+)", st)
     me_id = me.group(1) if me else None
