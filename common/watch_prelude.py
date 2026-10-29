@@ -10,10 +10,12 @@
 # View checks (the "view census"): chat alone misses NEXT-TILE dangers that
 # never reach the log — fires, hostile mobs, hull breaches, gas. Both checks
 # scan the ASCII view (areas + mobs + threat objects) and abort/report.
-VIEW_THREAT = (r"\bfire\b(?!lock|alarm|axe|extinguisher)|\bplasma\b|"
+VIEW_THREAT = (r"\bfire\b(?!\s*(?:lock|alarm|axe|extinguisher|sensor|locker))|"
+               r"burning plasma|plasma fire|plasma leak|"
                r"fireball|singularity|singulo|\bblob\b|blobbernaut|"
-               r"xenomorph|slime(?! ?extract)|screech|carp(?! ?bag)|"
-               r"hole|breach|spark|tesla|revanant|revenant")
+               r"xenomorph|alien (?:hunter|sentinel|drone|queen|praetorian)|"
+               r"slime(?! ?extract)|screech|carp(?! ?bag)|"
+               r"hole|breach|tesla(?! ?coil)|revanant|revenant")
 # mobs that threaten: named mobs nearby (crowd/antagonist awareness)
 VIEW_AREA_SKIP = ()   # no area name is itself a threat
 
