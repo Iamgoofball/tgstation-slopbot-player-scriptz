@@ -4,16 +4,16 @@ _d = _os.path.dirname(_os.path.abspath(__file__))
 exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
 precheck()
 """Turn ON emitters one at a time, from beside/behind each (never from in
-front â€” the beam does 30 burn per hit), with a SAFETY WATCHDOG between each:
+front — the beam does 30 burn per hit), with a SAFETY WATCHDOG between each:
 reads chat + status, and ABORTS immediately if the supermatter starts
 delaminating, anything explodes/floods, or the mob is hurt. THIS script
-started our engine delam once â€” it now verifies after each emitter and stops
+started our engine delam once — it now verifies after each emitter and stops
 at the first sign of trouble.
 
 Run: run_script {script: ".../engineering/emitters_on.py",
                  args: {"ids": [111, 222, 333]}}
 Optional: {"off": true} turns emitters OFF instead (delam response: kill the
-beams FIRST, then vent â€” waste scales with energy, so emitters off is always
+beams FIRST, then vent — waste scales with energy, so emitters off is always
 step 1). {"verify": {"computer": <NtOS console id>}} adds a CIMS DELTA CHECK after the
 toggles: reads the CIMS twice via the NtOS console {"computer": obj_id} and
 asserts energy moved in the expected direction (ON -> rising, OFF -> falling). NEVER trust clicks
@@ -22,7 +22,7 @@ never land (unknown state), and a blind re-click TOGGLES BACK (this script
 was present at both of our delam-track excursions for exactly these reasons).
 If emitters won't fire when ON (no power): check cable + SMES,
 maximize SMES, run a P.A.C.M.A.N. for kickstart power, or toss a 1-credit
-holochip (alt-click ID) / *kiss the crystal through the glass â€” anything
+holochip (alt-click ID) / *kiss the crystal through the glass — anything
 hitting the crystal adds trickle energy. Diode disks (screwdriver the emitter
 maint panel open, swap with crowbar) change each hit: Psychosyphoning
 (psy+25%, âˆ’25 MeV) and Electrodisruptive (+0.25% integrity, âˆ’60 MeV) are the

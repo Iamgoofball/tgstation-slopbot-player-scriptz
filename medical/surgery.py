@@ -121,7 +121,7 @@ else:
     time.sleep(1.0)
     out["btn_clicked"] = ("clicked: obj %d" % target) in (cb.text or "")
     time.sleep(wait)
-    ch = sk.read_chat(wait_s=2).text or ""
+    ch = _pull_chat(2)
     out["chat"] = [l[:140] for l in ch.split("\n")
                    if re.search(r"succeed|fail|begin|surger|remov|graft|repair", l, re.I)][:6]
     out["ok"] = bool(out["chat"])

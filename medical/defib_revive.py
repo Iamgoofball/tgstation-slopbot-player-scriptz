@@ -61,7 +61,7 @@ def scan():
     c = sk.click(object_id=mob, expect_name=name or None)
     t = c.text or ""
     if "Analyzing results" not in t:
-        t += "\n" + (sk.read_chat(wait_s=2.5).text or "")
+        t += "\n" + _pull_chat(2.5)
     return parse_scan(t)
 
 gate = scan()
@@ -134,7 +134,7 @@ bot.goto(object_id=mob, expect_name=name or None, adjacent=True)
 c = sk.click(object_id=mob, expect_name=name or None)
 t = c.text or ""
 time.sleep(1.5)
-t += "\n" + (sk.read_chat(wait_s=2.5).text or "")
+t += "\n" + _pull_chat(2.5)
 out["resus"] = "Resuscitation successful" in t
 out["refused"] = "Tissue damage too severe" in t
 out["zapped_puller"] = bool(re.search(r"shock|electrocut", t, re.I)) and not out["resus"]

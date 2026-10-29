@@ -63,7 +63,7 @@ bot.goto(object_id=mob, expect_name=name or None, adjacent=True)  # scans need a
 c = sk.click(object_id=mob, expect_name=name or None)
 txt = c.text or ""
 if "Analyzing results" not in txt:
-    txt += "\n" + (sk.read_chat(wait_s=2.5).text or "")
+    txt += "\n" + _pull_chat(2.5)
 
 def parse_scan(t):
     t = re.sub(r"<[^>]+>", " ", t)

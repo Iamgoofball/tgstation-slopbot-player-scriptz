@@ -4,8 +4,8 @@ _d = _os.path.dirname(_os.path.abspath(__file__))
 exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
 precheck()
 """EMERGENCY delamination response, one envelope. Order matters (learned the
-hard way â€” Lennox Fields RIP):
-1. Kill the beams (emitters off) â€” stops new energy instantly.
+hard way — Lennox Fields RIP):
+1. Kill the beams (emitters off) — stops new energy instantly.
 2. Air alarm -> panic siphon (vents OFF, scrubbers siphon hard) + widenet.
 3. Open the N2 canister valves (cold nitrogen flood cools the chamber).
 4. Verify CIMS trend; return {integrity_trend} so the agent can decide
@@ -18,10 +18,10 @@ All ids are args — never hard-coded (ids change every round). Guide facts
 (supermatter_setup_guide.txt):
 at 0% integrity the crystal has a **30 s window in which it can still heal**
 (it keeps taking damage; it must climb back above 0), but the common-channel
-broadcast says **15 seconds** â€” treat 15 s as the realistic window. After this
+broadcast says **15 seconds** — treat 15 s as the realistic window. After this
 script the agent MUST read the result and, if integrity is still falling and
 no countdown yet, either repeat it or physically RUN (sk.move away 10+ tiles)
-â€” the blast is ~37 tiles with O2 in the chamber. Delam type at 0% depends on
+— the blast is ~37 tiles with O2 in the chamber. Delam type at 0% depends on
 state: >5000 MeV â†’ tesla ball; >1800 moles â†’ singularity; 40/40 hyper+anti-nob
 â‰¥270 mol â†’ resonance cascade (cims_read.py flags all three).
 """

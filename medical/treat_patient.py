@@ -68,7 +68,7 @@ def scan():
     c = sk.click(object_id=mob, expect_name=name or None)
     t = c.text or ""
     if "Analyzing results" not in t:
-        t += "\n" + (sk.read_chat(wait_s=2.5).text or "")
+        t += "\n" + _pull_chat(2.5)
     return parse_scan(t)
 
 def ui_open():

@@ -10,7 +10,7 @@ Run: run_script {script: ".../engineering/machine_ui.py", args: {"id": 12345}}
 Optional: {"actions": [{"action": "power"}, {"action": "target", "params": {...}}, ...]}
 Returns {win, state_keys, data, acted}. `data` is the window's JSON "data"
 object (compact); compare before/after by running it twice.
-Empty active hand required â€” a held tool gets used ON the machine instead.
+Empty active hand required — a held tool gets used ON the machine instead.
 """
 import json
 import re
