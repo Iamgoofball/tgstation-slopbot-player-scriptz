@@ -3,26 +3,35 @@ import os as _os
 _d = _os.path.dirname(_os.path.abspath(__file__))
 exec(open(_os.path.join(_d, '..', 'common', 'watch_prelude.py'), encoding='utf-8').read())
 precheck()
-"""Serve an item to a patron (Bartender): fetch by name, hand it over, verify.
+"""Serve an item to a patron (Bartender): fetch by name, then offer it.
 
-Finds the item in view (or fetches it from a remembered tile), picks it up,
-walks next to the patron (mob, found BY NAME), clicks them with the item in
-the active hand - a plain click with an item on a mob GIVES it (help intent;
-combat mode must be off) - and verifies by the hand emptying. Never hard-code
-ids: item and mob are name args.
+Two serve modes:
+- default: walk next to the patron, press G (the OFFER hotkey) while holding
+  the item. NEVER a plain click - a click with an item in hand USES the item
+  on the mob (throw/splash/pour/strike).
+- {"table": true}: set the item on a table (name via "table_name", default
+  "table") next to the patron instead of handing it over.
+
+Item found by name - exact match preferred ("space beer", not "broken space
+beer"), in view first, then from remembered tiles. Verified by the hand
+emptying (+ the item being on the table in table mode). Patrons can REFUSE
+an offer; read the chat tail, never repeat, stow the item and move on.
 
 Run: run_script {script: ".../service/serve_item.py",
                  args: {"item": "space beer", "mob": "John Alcoholic",
                         "say": "Fresh one, on the house."}}
+Table mode: args: {"item": "...", "table": true, "say": "..."}
 Returns {ok, item, mob, now, rev}.
 """
 import re, time
 opts = args or {}
 item_name = opts.get("item")
 mob_name = opts.get("mob")
+table_mode = bool(opts.get("table"))
 line = opts.get("say") or ""
-if not item_name or not mob_name:
-    raise ValueError('args: {"item": "space beer", "mob": "John Alcoholic", "say": "..."}')
+if not item_name or (not mob_name and not table_mode):
+    raise ValueError('args: {"item": "space beer", "mob": "John Alcoholic", "say": "..."} '
+                     'or {"item": "...", "table": true} to set it on a table')
 out = {"ok": True, "item": item_name, "mob": mob_name}
 
 
@@ -35,14 +44,19 @@ def _hand_item():
     return m.group(2) if m else "unknown"
 
 
-def _find(name, query, in_view=True):
+def _find(name, query, in_view=True, exact=False):
     s = (sk.search(query=query, in_view=in_view).text or "")
-    m = re.search(r'- (?:obj|mob) (\d+) "([^"]*' + re.escape(name) + r'[^"]*)"', s)
-    if not m:
-        return None, None, None
-    p = re.search(r'at (\d+),(\d+)', s)
-    return (int(m.group(1)), m.group(2),
-            (int(p.group(1)), int(p.group(2))) if p else None)
+    pat = (r'- (?:obj|mob) (\d+) "([^"]*)"' if exact else
+           r'- (?:obj|mob) (\d+) "([^"]*' + re.escape(name) + r'[^"]*)"')
+    for m in re.finditer(pat, s):
+        if exact and m.group(2) != name:      # "broken space beer" != "space beer"
+            continue
+        if not exact and name not in m.group(2):
+            continue
+        p = re.search(r'at (\d+),(\d+)', s[m.start():])
+        return (int(m.group(1)), m.group(2),
+                (int(p.group(1)), int(p.group(2))) if p else None)
+    return None, None, None
 
 
 # ---- combat mode OFF (a held item clicked on a mob with combat on = attack) ----
@@ -54,8 +68,12 @@ if cm and "combat_off" not in cm[0]:
 out["combat"] = [l.strip()[:60] for l in
                  [x for x in (sk.status().text or "").split("\n") if "combat" in x.lower()]][:1]
 
-# ---- pick up the item (in view > known out of view) ----
-iid, iname, ipos = _find(item_name, item_name, True)
+# ---- pick up the item (exact name first, then substring; in view > known) ----
+iid, iname, ipos = _find(item_name, item_name, True, exact=True)
+if not iid:
+    iid, iname, ipos = _find(item_name, item_name, True)
+if not iid:
+    iid, iname, ipos = _find(item_name, item_name, False, exact=True)
 if not iid:
     iid, iname, ipos = _find(item_name, item_name, False)
 if not iid:
@@ -72,24 +90,37 @@ sk.click(object_id=iid, expect_name=(iname or item_name)[:40]); time.sleep(0.8)
 if item_name[:6] not in (_hand_item() or "").lower():
     raise RuntimeError("pickup failed, holding: " + str(_hand_item()))
 
-# ---- walk to the patron and hand it over ----
-mid, mname, mpos = _find(mob_name, mob_name, True)
-if not mid:
-    mid, mname, mpos = _find(mob_name, mob_name, False)
-if not mid:
-    raise RuntimeError("patron not found: " + mob_name)
-if mpos:
-    bot.goto(x=mpos[0] - 1, y=mpos[1]); time.sleep(0.4)
-mid2, _, _ = _find(mob_name, mob_name, True)   # re-find after the walk
-if not mid2:
-    raise RuntimeError("patron lost from view after walking: " + mob_name)
-sk.click(object_id=mid2, kind="mob", expect_name=mname[:40]); time.sleep(1.0)
-given = _hand_item() is None
+# ---- serve: table mode (set it on a table next to them) or G offer ----
+if opts.get("table"):
+    tbl = _find(opts.get("table_name") or "table", opts.get("table_name") or "table", True)
+    if not tbl[0]:
+        raise RuntimeError("no table in view to set the item on")
+    bot.goto(x=tbl[2][0], y=tbl[2][1]); time.sleep(0.4)   # goto falls back adjacent
+    tbl2 = _find(opts.get("table_name") or "table", opts.get("table_name") or "table", True)
+    sk.click(object_id=(tbl2[0] or tbl[0]), expect_name=None); time.sleep(1.0)
+    placed = _hand_item() is None
+    on_table = bool(_find(item_name, item_name, True)[0])
+    out["ok"] = placed and on_table
+    if not out["ok"]:
+        out["detail"] = "hand still full or item not on the table after the click"
+else:
+    mid, mname, mpos = _find(mob_name, mob_name, True)
+    if not mid:
+        mid, mname, mpos = _find(mob_name, mob_name, False)
+    if not mid:
+        raise RuntimeError("patron not found: " + mob_name)
+    if mpos:
+        bot.goto(x=mpos[0] - 1, y=mpos[1]); time.sleep(0.4)
+    mid2, _, _ = _find(mob_name, mob_name, True)   # re-find after the walk
+    if not mid2:
+        raise RuntimeError("patron lost from view after walking: " + mob_name)
+    sk.key(key="G"); time.sleep(1.0)   # OFFER hotkey; NEVER a click (uses the item on them)
+    out["ok"] = _hand_item() is None
+    if not out["ok"]:
+        out["detail"] = ("offer did not transfer: patron may refuse, have full "
+                         "hands, or be too far; read the chat tail")
 if line:
     sk.say(line); time.sleep(0.8)
-out["ok"] = given
-if not given:
-    out["detail"] = "item still in hand after the click (maybe full hands or intent)"
 
 now = sk.status()
 RESULT = dict(out, now=(now.get("you") or "")[:80], rev=now.rev)

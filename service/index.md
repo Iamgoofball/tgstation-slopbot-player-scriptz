@@ -7,7 +7,7 @@ crew script can reuse). One `run_script` call, one compact dict back.
 | --- | --- | --- |
 | `showcase_stock.py` | `vendor` (default "Booze-O-Mat"), `showcase` (default "drink showcase"), `count` (default 6) or `items: [names]` | Vends bottles and racks them in the drink showcase. Product refs are read AT RUNTIME from the open Vending window - never hard-code ids. Walks vendor -> showcase per bottle. |
 | `clean_bar.py` | `tool` (default "rag"), `radius` (default 6), `max_tiles` (default 10) | Pick up the tool by name, walk to every dirt/vomit/blood tile in view, scrub it. Re-run after new messes; cleaned tiles vanish. |
-| `serve_item.py` | `item`, `mob` (both names, required), `say` (optional line after handing) | Fetch the item (walks adjacent first: in view is NOT in reach), walk to the patron, plain click GIVES the item (help intent; combat mode must be off), verify by the hand emptying. |
+| `serve_item.py` | `item` (required); `mob` + default mode, OR `table: true` (+ `table_name`, default "table"); `say` optional | Fetch the item (exact name preferred; walks adjacent first: in view is NOT in reach). Default serve: walk to the patron and press **G** (the OFFER hotkey) - NEVER a click, a click with an item in hand USES the item on the mob. Table mode sets the item on a table next to them. Verified by the hand emptying. Patrons can refuse: read the chat, never repeat. |
 
 Gotchas
 - Interaction range is ~1 tile: always `bot.goto` next to the vendor/machine
