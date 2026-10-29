@@ -9,10 +9,13 @@ listed here too.
 | `pump_set.py` | `name`, `on?`, `max?` | Ctrl-click (on/off) + alt-click (4500 kPa) one pump/valve/bypass/filter by name, in view. |
 | `freezer_set.py` | `id` or `name`, `target?` | Temperature control unit → `power` + `target` via tgui (engine: 73.15 K). **Never alt-click a freezer** — first alt-click = 573 K heating. |
 | `smes_set.py` | `id`, `input_w?`, `output_w?` | Smes window: input 200 kW (max), output 190 kW; verifies `inputAttempt/outputAttempt`. |
-| `cims_read.py` | — | NT CIMS from the PDA (no need to hold it): integrity, energy (GeV), gas temp vs temp_limit, moles, gas %, zap MW. Healthy: 100 / 1.3-1.6 GeV / 70-85 K / ~14 mol / ~97% N2. |
-| `emitters_on.py` | `ids` | Click each emitter on from beside/behind (never in front: 30 burn/hit), verify "Emitting one beam" per examine. |
-| `air_alarm_setup.py` | `id`, `stage`, `ext_pressure`=101 | `vents`: external limit CHECK off (**XOR quirk: excheck val=1 clears, val=0 is a no-op**) + external target set to `ext_pressure` (NEVER 0 with the check on — the vent then never pumps; cost us the whole N2 load once). `scrubbers`: widenet — **siphon only when CIMS reads >8 mol and >90% N2**, else you vacuum the chamber. |
-| `ui_batch.py` | `ids`, `actions?` | Open many machines' tgui in one envelope; read `data` (filter_types compressed to enabled gases); per-id `actions` (e.g. `[{"action":"power"},{"action":"pressure","params":{"pressure":4500}}]`) then re-reads. Empty active hand! |
+| `cims_read.py` | — | NT CIMS from the PDA (no need to hold it): integrity, energy (GeV), gas temp vs temp_limit, moles, gas %, zap MW. Healthy: 100 / 1.3-1.6 GeV / 70-85 K / ~14 mol / ~97% N2. **PDA-dependent — the battery dies and takes the program with it; prefer cims_console.py.** |
+| `cims_console.py` | `computer` (default 35500), `x?`,`y?` | CIMS via the SMES-room **NtOS computer** (`PC_runprogram {name:"ntcims"}`) — PDA-independent. Must stand NEXT to the console (2 tiles = view-only, reads still work; 3-5 disabled). Empty active hand! |
+| `cims_watch.py` | `computer?`, `gap_s?`=20 | TWO CIMS reads + delta → `trend`: healing / stable / **destabilizing** (act!). A single read can't tell healing from falling — deltas are ground truth. |
+| `toggle_machine.py` | `id`, `goal`, `kind`=`emitter`\|`tgui_field` | **State-checked toggle** (toggles are NOT idempotent — both our near-delams came from blind re-clicks): tgui_field reads the field, acts only if it differs, verifies. `kind:"emitter"` uses the click echo ("You turn on/off the emitter") — follow with `emitters_on verify` or `cims_watch`. |
+| `emitters_on.py` | `ids`, `off?`, `verify?: {computer}` | Click each emitter from beside/behind (never in front: 30 burn/hit), examine-verify per emitter. `verify` adds a CIMS energy delta check (ON→rising, OFF→falling) — **never trust clicks/icons: emitter icons look identical on/off.** |
+| `air_alarm_setup.py` | `id`, `stage`, `ext_pressure`=101, `siphon?` | `vents`: external limit CHECK off (**XOR quirk: excheck val=1 clears, val=0 is a no-op**) + external target `ext_pressure` (NEVER 0 with the check on — the vent then never pumps). `scrubbers`: widenet; with `siphon: true` sets **siphon = `scrubbing val:0`** (val:1 is scrub-mode!) — siphon only when CIMS reads >8 mol and >90% N2, else you vacuum the chamber. |
+| `ui_batch.py` | `ids`, `actions?`, `set_states?` | Open many machines' tgui in one envelope; read `data` (filter_types compressed); per-id `actions` (blind!) or **`set_states`** (state-checked: `{field, goal, action}` — acts only if the field differs from goal, re-reads to verify). Empty active hand! |
 | `machine_ui.py` | `id`, `actions?` | Single machine: walk adjacent, open, parse, act. |
 | `survey_machines.py` | `spots`, `only?` | Walk spots, page in-view search, return filtered machinery list. |
 | `pull.py` | `id`, `release?`, `walk?` | Pull a thing (this fork: Pull is the shift-right-click context verb; script runs `Pull` + answers the target prompt — auto-walks adjacent). Pulled things trail on your previous tile; `sk.move(direction, steps)` pushes them ahead when you bump them. HUD "stop pulling" releases. |
@@ -46,10 +49,11 @@ against MetaStation checklist above):
    column omni filters 39635/39641 ON (no gases) + 39645 ON (N2 only);
    freezer 39033 ON @ 73.15 K; Cooling Loop Bypass 39388 + Atmos to Loop
    38891 stay OFF. All via `ui_batch.py actions`.
-3. Air alarm 37881 (chamber): vents external-limit OFF; scrubbers siphon +
-   widenet only after CIMS gates.
-4. CIMS baseline (`cims_read.py`), SMES 200/190, emitters 40383/40386/40540
-   from behind, shutters 37873, lock emitters + reflectors.
+3. Air alarm 37881 (chamber): vents external-limit OFF (excheck val=1); scrubbers
+   widenet + **siphon (`scrubbing val:0`) only after CIMS gates**.
+4. CIMS baseline (`cims_console.py` via the NtOS computer 35500 @152,150 — or
+   PDA if its battery lives), SMES 200/190, emitters (3 this round: 40384 ON,
+   40387/40541 spare) from behind, shutters, lock emitters + reflectors.
    (Guide variants of the same steps: see "Guide's setup order" below.)
 
 Killer gotchas:
@@ -78,6 +82,28 @@ Killer gotchas:
 - Bullets damage the crystal, lasers don't. Emitters settle ~1.3-1.6 GeV on N2.
 - Integrity <95% warns on :e, <25% on common, 0% = 15 s countdown then blast
   (small on N2, ~37 tiles heavy damage if O2/plasma-rich).
+
+## Excursion case study (round "Anthropic Station XIII", recovered 74.6% → 100%)
+
+What happened, in order — every step is a lesson:
+1. Ignited with **3 emitters while the chamber still read 14% O2** (>10% = delam
+   risk; also SMES read "charge 0" from a **stale APC window** — the bank was
+   actually full; always re-verify `interface:`).
+2. Set scrubbers to "siphoning" that was actually **scrub-mode** (`scrubbing
+   val:1` = scrub; **siphon = val:0** — Parabellum yelled this correction on :e).
+   O2 climbed unchecked → integrity 100 → 74.6, temp 1622 K.
+3. **Blind re-click** on the last emitter during the kill turned it back ON
+   (interrupted earlier click = unknown state). Energy jumped 413 → 928.
+4. Recovery that worked: kill ALL beams → siphon (val:0) + widenet → feed cold
+   N2 → **Low Temperature Healing near ~100 K restored 100% integrity**. Moles
+   97 → 6.6 purge, then refill; O2 → 0.
+
+Rules now encoded: `cims_watch.py` trend before/after ANY emitter or alarm
+change; `toggle_machine.py`/`ui_batch set_states` instead of blind toggles;
+siphon polarity in `air_alarm_setup.py`; **one emitter is a complete, stable
+engine** (temp ~60-80 K, energy ~300-1000 oscillating, integrity 100, SMES
+input ~192 kW available). Machine **ids change every round** — the ids in the
+setup order below are examples, re-survey each shift.
 
 ## Guide mechanics (integrated from `supermatter_setup_guide.txt`, tg wiki)
 

@@ -151,6 +151,9 @@ lost. The agent MUST read that section on every envelope and answer
 10. **Keep the active-hand discipline.** Most "nothing happened" mysteries were an
     item sitting in the active hand eating the click. Check `sk.inventory()`'
     `active_hand` line before acting; drop (`Q`) or swap (`X`) as the step needs.
+    **Q is dangerous**: it drops whatever is active — it once dropped the PDA
+    mid-flow. Know exactly what's in the active hand (read inventory first);
+    prefer stowing in the backpack over dropping.
 11. **Combat mode off for care actions.** With combat on, clicks harm instead of
     help (defib harm-zaps, punches). The HUD button `toggle combat mode` shows
     `state=combat_off` when safe — check it in scripts that could hurt someone.
@@ -161,6 +164,39 @@ lost. The agent MUST read that section on every envelope and answer
 14. **Duplicate tiny helpers, don't import.** A 10-line `parse_thing()` repeated
     in a few files beats a shared module the runner can't resolve. Keep helpers
     that small.
+
+## 2.5 tgui semantics traps (source-verified, cost real damage)
+
+Read the `.dm`/`.tsx` source before trusting an action's meaning — all of
+these bit us in one session (`tgstation/code/modules/atmospherics/machinery/
+air_alarm/_air_alarm.dm`, `tgui/.../AirAlarm/screens/Home.tsx`):
+
+- **`excheck` is XOR, not a setter**: `params {val: 1}` CLEARS the external
+  pressure bound; `val: 0` is a silent no-op. (`pressure_checks ^
+  ATMOS_EXTERNAL_BOUND`.)
+- **Scrubber polarity**: `scrubbing {val: 1}` = scrub MODE (only removes
+  *selected* gases — select none and it removes nothing); **siphon is
+  `val: 0`** (`set_scrubbing(true)` = scrub). We set "siphoning" that was
+  actually scrub-mode and O2 climbed unchecked → near-delam.
+- **`external: 0` with the check enabled = the vent NEVER pumps** (target
+  below atmospheric minimum), not "no limit". This one setting starved the
+  chamber of the whole N2 supply for an hour.
+- **Rendered React buttons don't appear in facts**: the alarm's "Vent
+  Controls" button is a client-side `setScreen('vents')` — it shows in no
+  `actions:` list. Rule: **"not in my facts" ≠ "doesn't exist"** — when a
+  human sees UI I can't, read the `.tsx` source.
+- **Action lists in facts are truncated**. Re-read with a bigger slice
+  before concluding an action is absent.
+- **Stale window reuse**: clicking a machine may reuse an already-open tgui
+  window (we read an APC window as "the SMES", charge 0). Close stale
+  windows first and re-verify `interface:` after EVERY open.
+- **`expect_name` must match the real full name** ("power storage unit",
+  not "SMES"). Prompt/Pull matching is name-only — isolate by standing so
+  only the target is in `oview(1)`, then verify the `Pull obj <id>` line.
+- **Toggles are not idempotent.** Read state first, act only if it differs
+  (`toggle_machine.py`, `ui_batch set_states`). An interrupted call = state
+  unknown = verify before re-acting (a re-click toggles BACK — sent energy
+  to 928 mid-excursion).
 
 ## 3. Fork truths (this server's control cheatsheet)
 
@@ -229,6 +265,34 @@ Surgery truths (source-verified + live):
   brute/burn < 180 AND heart AND brain not Non-Functional (head chain for the
   brain).
 
+Supermatter / engine truths (this round, live + source):
+
+- **Ground-truth ranking**: CIMS delta (two reads over time) > click echoes >
+  icon states > chat warnings > assumptions. Emitter icons look identical
+  on/off; only the CIMS energy delta proves what's running.
+- **CIMS lives in the NtOS computer** (SMES room), NOT the PDA — PDAs die
+  (battery) and the program dies with them. `PC_runprogram {name: "ntcims"}`
+  from next to the console (2 tiles = view-only but reads work, 3-5 disabled).
+  Empty active hand required to open it. Scripts: `engineering/cims_console.py`
+  (single read), `engineering/cims_watch.py` (two reads + trend).
+- **One emitter = stable equilibrium** on pure cold N2: temp ~60-80 K, energy
+  ~300-1000 oscillating, integrity 100. Three emitters on a chamber with 14%
+  O2 → temp 1622 K, integrity → 74.6%. **Never ignite above 10% O2.**
+- **Excursion playbook (worked, 74.6% → 100%)**: integrity falling + O2 > 10%
+  + temp > limit → (1) kill ALL beams first (waste scales with energy),
+  (2) scrubbers to SIPHON (`scrubbing val: 0`!), (3) feed cold N2, (4) wait —
+  Low Temperature Healing kicks in near ~100 K and integrity rises by itself.
+- **Pump map (this fork's engine)**: External Gas to Loop ×2, Gas to Cold
+  Loop + Cold Loop to Gas, **Mix to Gas AND Gas to Mix (both needed — 39201
+  was found OFF)**, Gas to Chamber + Gas to Filter, SW filter, column filters
+  (N2-only one feeds the chamber), TCUs ×2 @73.15 K; bypasses + Atmos-to-Loop
+  OFF. Canister port valve: `valve` action toggles, `pressure` sets kPa
+  (4500). Chamber air alarm: vents ext-limit cleared (`excheck val:1`) +
+  external 101 kPa; scrubbers widenet ON, siphon only after CIMS gates
+  (>8 mol, >90% N2).
+- **Crystal radio warnings lag** and Poly the parrot fakes delam alarms —
+  trust the CIMS, announce via `:e` only on real trends.
+
 ## 4. Script conventions
 
 Every script in this repo:
@@ -253,7 +317,7 @@ Every script in this repo:
 | `inventory/` | Hands & containers: drop, open, take, equip to HUD slots, **quick_equip** (E — stores into containers when the slot is occupied, never swaps!), toggle worn-slot display |
 | `machines/` | Vendor purchases, surgery-tray tool grabs |
 | `medical/` | Analyze, treat, medipen, bed placement, defib revival, radial-menu surgery, heal-to-full flows |
-| `engineering/` | Supermatter engine loop setup (omni pumps/filters, freezers, air alarm), SMES, emitters, NT CIMS reads, canister seating (pull.py/wrench.py), **delam_response.py emergency playbook**. See its index.md for this fork's omni-device truths. |
+| `engineering/` | Supermatter engine loop setup (omni pumps/filters, freezers, air alarm), SMES, emitters, NT CIMS reads via PDA or the NtOS console (`cims_console.py`/`cims_watch.py` — PDA-independent), state-checked toggles (`toggle_machine.py`, `ui_batch set_states`), canister seating (pull.py/wrench.py), **delam_response.py emergency playbook**. See its index.md for this fork's omni-device truths and tgui polarity traps. |
 
 Each folder has its own `index.md` listing the scripts, their arguments and when
 to reach for them.
