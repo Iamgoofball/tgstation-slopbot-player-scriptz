@@ -86,15 +86,19 @@ lost. The agent MUST read that section on every envelope and answer
 
 Speech isn't the only blind signal: **dangers that never reach the chat log**
 (fires, hostile mobs, hull breaches, plasma) are caught by a cheap **ASCII
-view census** in `_view_census()` — one `search(query="", in_view=True)` per
-check. Every precheck/postcheck/watch now returns (and pre/post/watch ABORT
-on) `view.threats` — objects in view matching `VIEW_THREAT` (fire-not-alarm,
+view census** in `_view_census()` — one `sk.look()` (the MCP's text map;
+falls back to `search(query="", in_view=True)`) per check. Every
+precheck/postcheck/watch now returns (and pre/post/watch ABORT on)
+`view.threats` — objects in view matching `VIEW_THREAT` (fire-not-alarm,
 plasma, singulo, blob, xenomorph, breach, tesla, ...) — plus `view.areas`
-(sorted area names in view) and `view.mobs` (other mobs nearby). The area
-list is also the fastest way to *navigate*: if an area name shows up in the
-census (e.g. a docked "Emergency Shuttle"), `bot.goto(area=...)` reaches it
-in one call — this is how the round-end shuttle was finally boarded after
-name-searches kept missing its misnamed ("Departure Lounge Airlock") doors.
+(sorted area names in view), `view.mobs` (other mobs nearby), and
+`view.overlay` (what Dream Seeker draws OVER the map: hurt/damage overlays,
+blindfolds — a brute-damage overlay in the census is a prompt to self-treat).
+The area list is also the fastest way to *navigate*: if an area name shows up
+in the census (e.g. a docked "Emergency Shuttle"), `bot.goto(area=...)`
+reaches it in one call — this is how the round-end shuttle was finally
+boarded after name-searches kept missing its misnamed ("Departure Lounge
+Airlock") doors.
 
 ---
 

@@ -20,27 +20,41 @@ VIEW_THREAT = (r"\bfire\b(?!\s*(?:lock|alarm|axe|extinguisher|sensor|locker))|"
 VIEW_AREA_SKIP = ()   # no area name is itself a threat
 
 def _view_census():
-    """ASCII view census: areas present, other mobs nearby, threat objects.
-    Cheap (one search), used by precheck/postcheck so a hazard that never
-    reaches chat is still seen. Returns {areas, mobs, threats, pos}."""
+    """ASCII view census via sk.look() (the MCP's text map): areas present,
+    other mobs nearby, threat objects, and the 'covered' line (hurt/damage
+    overlays, blindfolds — things Dream Seeker draws OVER the map). Falls
+    back to search(query="", in_view=True) if look fails. Used by
+    precheck/postcheck so a hazard that never reaches chat is still seen.
+    Returns {areas, mobs, threats, overlay}."""
     try:
-        s = (sk.search(query="", in_view=True).text or "")
-    except Exception as ex:
-        return {"error": str(ex)[:60]}
+        s = (sk.look(radius=7, max_things=40).text or "")
+    except Exception:
+        try:
+            s = (sk.search(query="", in_view=True).text or "")
+        except Exception as ex:
+            return {"error": str(ex)[:60]}
     lines = [l for l in s.split("\n") if "- obj" in l or "- mob" in l]
-    areas = sorted(set(re.search(r"in ([^()]+?) \(", l).group(1).strip()
-                       for l in lines if " in " in l))
-    mobs = [re.search(r"- mob (\d+) \"([^\"]+)\" at (\d+,\d+)", l).groups()
-            for l in lines if "- mob" in l
-            and re.search(r"- mob (\d+) \"([^\"]+)\" at (\d+,\d+)", l)]
+    areas = sorted(set(re.search(r"area \"([^\"]+)\"", l).group(1).strip()
+                       for l in lines if " in area " in l))
+    if not areas:
+        m = re.search(r"areas: (.+)", s)
+        if m:  # look's "areas:" summary line (nearest first)
+            areas = [a.strip().split(" (")[0]
+                     for a in m.group(1).split(";") if a.strip()]
+    mobs = [m.groups() for l in lines for m in
+            [re.search(r"- mob (\d+) \"([^\"]+)\" at (\d+,\d+)", l)] if m]
     threats = [l[:110] for l in lines if re.search(VIEW_THREAT, l, re.I)][:6]
     st = (sk.status().text or "")
     me = re.search(r"you: mob (\d+)", st)
     me_id = me.group(1) if me else None
-    return {"areas": areas[:10],
-            "mobs": [{"id": m[0], "name": m[1][:40], "pos": m[2]}
-                     for m in mobs if m[0] != me_id][:8],
-            "threats": threats}
+    cov = re.search(r"covered: (.+)", s)
+    out = {"areas": areas[:10],
+           "mobs": [{"id": m[0], "name": m[1][:40], "pos": m[2]}
+                    for m in mobs if m[0] != me_id][:8],
+           "threats": threats}
+    if cov:
+        out["overlay"] = cov.group(1)[:140]   # e.g. hurt red overlay, blindfold
+    return out
 
 DANGER = (r"delaminat|integrity|countdown|causality|blast|explod|detonat|"
           r"flood|fire alarm|electroc|shock|husk|bomb|toxin|attack|hurt|"
