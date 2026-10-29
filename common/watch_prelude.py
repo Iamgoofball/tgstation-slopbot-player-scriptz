@@ -20,14 +20,15 @@ VIEW_THREAT = (r"\bfire\b(?!\s*(?:lock|alarm|axe|extinguisher|sensor|locker))|"
 VIEW_AREA_SKIP = ()   # no area name is itself a threat
 
 def _view_census():
-    """ASCII view census via sk.look() (the MCP's text map): areas present,
-    other mobs nearby, threat objects, and the 'covered' line (hurt/damage
-    overlays, blindfolds — things Dream Seeker draws OVER the map). Falls
-    back to search(query="", in_view=True) if look fails. Used by
+    """FULL ASCII view census via sk.look() (the MCP's text map): the map,
+    areas present, other mobs nearby, threat objects, and the 'covered' line
+    (hurt/damage overlays, blindfolds — things Dream Seeker draws OVER the
+    map). Falls back to search(query="", in_view=True) if look fails. Used by
     precheck/postcheck so a hazard that never reaches chat is still seen.
-    Returns {areas, mobs, threats, overlay}."""
+    Returns {map, areas, mobs, things, threats, overlay} — everything the
+    look can give, uncut (max_things high enough for the full 19x15 view)."""
     try:
-        s = (sk.look(radius=7, max_things=40).text or "")
+        s = (sk.look(radius=7, max_things=200).text or "")
     except Exception:
         try:
             s = (sk.search(query="", in_view=True).text or "")
@@ -48,9 +49,13 @@ def _view_census():
     me = re.search(r"you: mob (\d+)", st)
     me_id = me.group(1) if me else None
     cov = re.search(r"covered: (.+)", s)
-    out = {"areas": areas[:10],
+    # full dump: keep every line the look produced (map, legend, areas,
+    # things, left_out) — it is cheap and the agent wants it all
+    out = {"map": [l for l in s.split("\n") if l.strip()],
+           "areas": areas[:20],
            "mobs": [{"id": m[0], "name": m[1][:40], "pos": m[2]}
-                    for m in mobs if m[0] != me_id][:8],
+                    for m in mobs if m[0] != me_id][:12],
+           "things": lines[:200],
            "threats": threats}
     if cov:
         out["overlay"] = cov.group(1)[:140]   # e.g. hurt red overlay, blindfold
