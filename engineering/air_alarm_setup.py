@@ -12,10 +12,12 @@ stage "vents":     for EVERY vent in data.vents -> clear the external limit
                    args.ext_pressure (default 101 kPa; never 0 — an external
                    bound of 0 with the check on means the vent never pumps).
                    Never set vents to siphon!.
-stage "scrubbers": for EVERY scrubber in data.scrubbers -> widenet ON.
-                   (Siphon comes later, per the fork truth: only once the
-                   chamber has >8 mol and >90% N2 — use the alarm's "siphon"
-                   mode then, else you empty the chamber to vacuum.)
+stage "scrubbers": for EVERY scrubber in data.scrubbers -> widenet ON, and
+                   (args.siphon) set SIPHON mode: scrubbing {ref, val: 0} —
+                   POLARITY: set_scrubbing(true)=scrub-mode, so val:0 is
+                   SIPHON (source air_alarm.dm set_scrubbing). Siphon only
+                   once the chamber has >8 mol and >90% N2 (CIMS), else you
+                   empty the chamber to vacuum.
 
 Run: run_script {script: ".../engineering/air_alarm_setup.py",
                  args: {"id": <air alarm obj id>, "stage": "vents"|"scrubbers",
@@ -31,7 +33,9 @@ opts = args or {}
 oid = opts.get("oid") or opts.get("id")
 stage = (opts.get("stage") or "").lower()
 if not oid or stage not in ("vents", "scrubbers"):
-    raise ValueError("args: {'id': alarm_id, 'stage': 'vents'|'scrubbers'}")
+    raise ValueError("args: {'id': alarm_id, 'stage': 'vents'|'scrubbers', "
+                     "'ext_pressure'?: 101, 'siphon'?: bool (scrubbers only; "
+                     "CIMS gates must pass first) }")
 out = {"id": oid, "stage": stage}
 try:
     ext_pressure = float(opts.get("ext_pressure", 101))
@@ -101,6 +105,10 @@ for d in devices:
         act(wid, "set_external_pressure", {"ref": d["ref"], "value": ext_pressure})
     else:
         act(wid, "widenet", {"ref": d["ref"], "val": 1})
+        if opts.get("siphon"):
+            # POLARITY: scrubbing val 0 = SIPHON (set_scrubbing(true)=scrub);
+            # val 1 = scrub mode (removes only selected gases -> nothing)
+            act(wid, "scrubbing", {"ref": d["ref"], "val": 0})
 # verify against fresh data
 time.sleep(1.0)
 fresh = {(x["ref"]): x for x in dev_list(wid, path)}
@@ -113,7 +121,12 @@ for d in devices:
                    and bool(re.search(r'"external":\s*%s\b' % re.escape(str(ext_pressure)), seg)))
         d["power"] = bool(re.search(r'"power":\s*1\b', seg))
     else:
-        d["ok"] = bool(re.search(r'"widenet":\s*1\b', seg))
+        if opts.get("siphon"):
+            # siphon = scrubbing 0 (see polarity note above)
+            d["ok"] = bool(re.search(r'"scrubbing":\s*0\b', seg))
+        else:
+            d["ok"] = bool(re.search(r'"scrubbing":\s*1\b', seg))
+        d["widenet"] = bool(re.search(r'"widenet":\s*1\b', seg))
     out["devices"].append(d)
 out["ok"] = all(d["ok"] for d in out["devices"])
 RESULT = out
