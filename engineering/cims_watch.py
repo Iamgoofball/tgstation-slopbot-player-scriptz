@@ -9,8 +9,10 @@ destabilizing; deltas are the ground truth (icon states are useless: emitter
 'on' and 'off' look identical, and crystal warnings lag).
 
 Run: run_script {script: ".../engineering/cims_watch.py",
-                 args: {"computer": 35500}}
-Optional: {"gap_s": 20 (default), "x": 152, "y": 150}.
+                 args: {"computer": <NtOS console obj id>}}
+Optional: {"gap_s": 20 (default), "x","y": stand-adjacent tile}.
+Required: computer — ids change every round; find the NtOS console with
+survey_machines.py first.
 Returns {a, b, delta, trend, ok} — trend is one of:
   "healing"        integrity rising
   "stable"         integrity flat, temp under limit
@@ -19,8 +21,10 @@ Returns {a, b, delta, trend, ok} — trend is one of:
 """
 import re, time
 opts = args or {}
-cid = opts.get("computer") or 35500
-sx, sy = opts.get("x", 152), opts.get("y", 150)
+cid = opts.get("computer")
+if not cid:
+    raise ValueError("args: {'computer': obj_id} — ids change every round")
+sx, sy = opts.get("x"), opts.get("y")
 gap = float(opts.get("gap_s", 20))
 
 
@@ -29,7 +33,8 @@ def read_cims():
     iface = (re.search(r"interface: (\S+)", d) or [None]).group(1) \
         if re.search(r"interface: (\S+)", d) else None
     if iface != "NtosSupermatter":
-        bot.goto(x=sx, y=sy); time.sleep(0.4)
+        if sx is not None:
+            bot.goto(x=sx, y=sy); time.sleep(0.4)
         sk.click(object_id=cid, expect_name=None); time.sleep(2.2)
         d = (sk.tgui_window(id="tgui-window-1").text or "")
         iface = (re.search(r"interface: (\S+)", d) or [None]).group(1) \

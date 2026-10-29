@@ -7,8 +7,8 @@ precheck()
 parses the JSON data). With `actions` (per id) it also APPLIES tgui actions and
 re-reads the state after.
 
-Run: run_script {script: ".../engineering/ui_batch.py", args: {"ids": [37890],
-  "actions": {"37890": [{"action": "power"}, {"action": "pressure", "params": {"pressure": 4500}}]}}
+Run: run_script {script: ".../engineering/ui_batch.py", args: {"ids": [111111],
+  "actions": {"111111": [{"action": "power"}, {"action": "pressure", "params": {"pressure": 4500}}]}}
 Optional: {"set_states": {id: {"field": "on", "goal": true,
   "act_on": {"action": "power"}, "act_off": {"action": "power"}}}} —
   STATE-CHECKED apply: read field first, act ONLY if it differs from goal

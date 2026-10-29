@@ -10,7 +10,7 @@ listed here too.
 | `freezer_set.py` | `id` or `name`, `target?` | Temperature control unit → `power` + `target` via tgui (engine: 73.15 K). **Never alt-click a freezer** — first alt-click = 573 K heating. |
 | `smes_set.py` | `id`, `input_w?`, `output_w?` | Smes window: input 200 kW (max), output 190 kW; verifies `inputAttempt/outputAttempt`. |
 | `cims_read.py` | — | NT CIMS from the PDA (no need to hold it): integrity, energy (GeV), gas temp vs temp_limit, moles, gas %, zap MW. Healthy: 100 / 1.3-1.6 GeV / 70-85 K / ~14 mol / ~97% N2. **PDA-dependent — the battery dies and takes the program with it; prefer cims_console.py.** |
-| `cims_console.py` | `computer` (default 35500), `x?`,`y?` | CIMS via the SMES-room **NtOS computer** (`PC_runprogram {name:"ntcims"}`) — PDA-independent. Must stand NEXT to the console (2 tiles = view-only, reads still work; 3-5 disabled). Empty active hand! |
+| `cims_console.py` | `computer`, `x?`,`y?` | CIMS via the SMES-room **NtOS engineering console** (`PC_runprogram {name:"ntcims"}`) — PDA-independent. Must stand NEXT to the console (2 tiles = view-only, reads still work; 3-5 disabled). `computer` is REQUIRED (ids change every round — survey_machines.py finds it). Empty active hand! |
 | `cims_watch.py` | `computer?`, `gap_s?`=20 | TWO CIMS reads + delta → `trend`: healing / stable / **destabilizing** (act!). A single read can't tell healing from falling — deltas are ground truth. |
 | `toggle_machine.py` | `id`, `goal`, `kind`=`emitter`\|`tgui_field` | **State-checked toggle** (toggles are NOT idempotent — both our near-delams came from blind re-clicks): tgui_field reads the field, acts only if it differs, verifies. `kind:"emitter"` uses the click echo ("You turn on/off the emitter") — follow with `emitters_on verify` or `cims_watch`. |
 | `emitters_on.py` | `ids`, `off?`, `verify?: {computer}` | Click each emitter from beside/behind (never in front: 30 burn/hit), examine-verify per emitter. `verify` adds a CIMS energy delta check (ON→rising, OFF→falling) — **never trust clicks/icons: emitter icons look identical on/off.** |
@@ -23,37 +23,34 @@ listed here too.
 | `delam_response.py` | `emitters`, `alarm`, `canisters` | **EMERGENCY, one envelope**: emitters off → air alarm panic siphon + widenet scrubbers → open N2 canister valves → trend check. ABORTS + "RUN NOW" on countdown chat. Then flee (`sk.move` 10+ tiles) and re-run `cims_read.py`. (Guide: the 30 s window from 0% can still heal the crystal — but once the 15 s broadcast plays, just RUN.) |
 | `canister_port_seat.md` note | — | Seating recipe that works here: pull the canister, walk so it **trails onto the target port tile** (it lands on your previous tile each step — approach the port from the far side), or bump-push it with `sk.move(direction, 1..2)`. Then wrench (`wrench.py`). Wrench toggles fasten/unfasten — trust the new_chat line, not assumptions. |
 
-Port layout (verified this round):
-- **Intake ports (white #eeeeee)** @166,157 + 166,158 (166,158 = port 38316):
-  the two Nitrogen canisters' original spots. **N2 goes here** — both seated,
-  `portConnected: 1`, ~3.8 MPa, valves CLOSED.
-- **Output ports (red #ff0000)** @166,150 + 166,151 (38325/38328): the empty
-  spare canisters were parked on these, unfastened; they now sit parked west
-  (163,150/152). Do NOT connect N2 here.
-- The 166,152–166,156 column north of the red ports is WALL; the intake row
-  (166,157+) is a separate strip reached from the east side. Push canisters
-  along y=157/158, or trail them by walking.
+Port layout (verified one round — POSITIONS are stable on this fork, ids are not):
+- **Intake ports (white)**: a two-tile strip on the engine-room wall's
+  southeast side — **N2 goes here**. Wrench canisters there, verify
+  `portConnected: 1`, valves CLOSED until feeding time.
+- **Output ports (red)** further north along the same wall: the OUTPUT side —
+  never connect N2 there; park empty spares well away from both strips.
+- Between the red ports and the intake strip is solid wall; reach the intake
+  strip from its own side. Push canisters along the strip row, or trail them
+  by walking.
 
-Setup order (this fork's SM engine — "omni" devices, tgui-driven; verify
-against MetaStation checklist above):
+Setup order (this fork's SM engine — "omni" devices, tgui-driven; device NAMES
+are stable, ids are not — survey each shift):
 0. **Pre-flight**: CIMS baseline (integrity 100, energy 0), APC has power
    (externalPower > 0 or cell charged), chamber at ~101 kPa / 293 K. If the
    chamber shows O2 > 5% or pressure > 200 kPa BEFORE the engine runs, purge
    first. THEN:
-1. Wrench both Nitrogen canisters to the WHITE intake ports @166,157/158
-   (their original spots; 166,158 = port 38316; valves CLOSED — verified
-   `portConnected: 1`). The RED ports @166,150/151 are the output side —
+1. Wrench both Nitrogen canisters to the WHITE intake ports (valves CLOSED —
+   verified `portConnected: 1`). The RED ports are the output side —
    leave the empty canisters off them.
-2. Engine Coolant Bypass 37876 OFF (AtmosPump tgui); SW omni gas filter 37890
-   ON (no gases); Gas to Cold Loop 39215 + Cold Loop to Gas 39654 ON @ 4500;
-   column omni filters 39635/39641 ON (no gases) + 39645 ON (N2 only);
-   freezer 39033 ON @ 73.15 K; Cooling Loop Bypass 39388 + Atmos to Loop
-   38891 stay OFF. All via `ui_batch.py actions`.
-3. Air alarm 37881 (chamber): vents external-limit OFF (excheck val=1); scrubbers
+2. Engine Coolant Bypass OFF (AtmosPump tgui); SW omni gas filter ON (no
+   gases); Gas to Cold Loop + Cold Loop to Gas ON @ 4500; column omni filters
+   (two with no gases + one N2-only); freezer ON @ 73.15 K; Cooling Loop
+   Bypass + Atmos to Loop stay OFF. All via `ui_batch.py actions`.
+3. Chamber air alarm: vents external-limit OFF (excheck val=1); scrubbers
    widenet + **siphon (`scrubbing val:0`) only after CIMS gates**.
-4. CIMS baseline (`cims_console.py` via the NtOS computer 35500 @152,150 — or
-   PDA if its battery lives), SMES 200/190, emitters (3 this round: 40384 ON,
-   40387/40541 spare) from behind, shutters, lock emitters + reflectors.
+4. CIMS baseline (`cims_console.py` via the SMES-room NtOS console — or
+   PDA if its battery lives), SMES 200/190, emitters (3 on this fork; one is
+   enough) from behind, shutters, lock emitters + reflectors.
    (Guide variants of the same steps: see "Guide's setup order" below.)
 
 Killer gotchas:
@@ -168,13 +165,13 @@ setup order below are examples, re-survey each shift.
 ### Guide's setup order (color-coded MetaStation) vs this fork
 Guide steps, mapped to our omni-fork order (numbers in the setup order above):
 1. Gear: **mesons (or engi goggles in meson mode) + full radiation suit AND hood**; NT CIMS on the tablet — before anything else.
-2. Bypass pump OFF (green) → our 37876.
-3. Wrench N2 canisters, main loop pump ON + max (red) → our step 1 + 39215/39654.
+2. Bypass pump OFF (green) → our Engine Coolant Bypass.
+3. Wrench N2 canisters, main loop pump ON + max (red) → our step 1 + Gas to Cold Loop / Cold Loop to Gas.
 4. Chamber in/out pumps ON + max (orange).
-5. SW filter ON, max, **filter nothing** (blue) → our 37890.
-6. Cold-loop pumps max (violet) → our 39654/39215.
-7. White filters all ON + max; the double-circle one set to **N2**, others to **nothing** → our 39635/39641/39645. (All four must be ON even when set to nothing — that's how bad gas gets vented.)
-8. Freezer pumps ON + max (brown) and freezers ON + **minimize temp** (pink) → our 39033 @ 73.15 K.
+5. SW filter ON, max, **filter nothing** (blue) → our SW omni gas filter.
+6. Cold-loop pumps max (violet) → our Gas to Cold Loop / Cold Loop to Gas.
+7. White filters all ON + max; the double-circle one set to **N2**, others to **nothing** → our three column filters. (All must be ON even when set to nothing — that's how bad gas gets vented.)
+8. Freezer pumps ON + max (brown) and freezers ON + **minimize temp** (pink) → our freezer @ 73.15 K.
 9. Air alarm vents: **disable the external limit** (internals green, externals blue), keep vents on Pressurize → our vents stage.
 10. Air alarm scrubbers: **siphon + expanded range** → our scrubbers stage (guide does it immediately; our fork gates on CIMS >8 mol / >90% N2).
 11. Verify via CIMS: temp dropping, composition → pure N2, **moles above 8**.

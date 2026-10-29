@@ -11,8 +11,8 @@ adjacent first. Walking then drags the pulled thing along (it trails on your
 previous tile); bumping into it pushes it.
 
 Run: run_script {script: ".../engineering/pull.py",
-                 args: {"id": 38315}}                 # start pulling
-                 args: {"id": 38315, "release": true} # stop pulling
+                 args: {"id": NNNNN}}                 # start pulling
+                 args: {"id": NNNNN, "release": true} # stop pulling
 Optional: {"walk": [x, y]} to walk there while pulled. Returns {pulled|released,
 pos}. Note: ctrl+click does NOT pull here (this fork uses ctrl+click to toggle
 machines); the HUD "stop pulling" button (state=pull) also releases.

@@ -282,14 +282,14 @@ Supermatter / engine truths (this round, live + source):
   + temp > limit → (1) kill ALL beams first (waste scales with energy),
   (2) scrubbers to SIPHON (`scrubbing val: 0`!), (3) feed cold N2, (4) wait —
   Low Temperature Healing kicks in near ~100 K and integrity rises by itself.
-- **Pump map (this fork's engine)**: External Gas to Loop ×2, Gas to Cold
-  Loop + Cold Loop to Gas, **Mix to Gas AND Gas to Mix (both needed — 39201
-  was found OFF)**, Gas to Chamber + Gas to Filter, SW filter, column filters
-  (N2-only one feeds the chamber), TCUs ×2 @73.15 K; bypasses + Atmos-to-Loop
-  OFF. Canister port valve: `valve` action toggles, `pressure` sets kPa
-  (4500). Chamber air alarm: vents ext-limit cleared (`excheck val:1`) +
-  external 101 kPa; scrubbers widenet ON, siphon only after CIMS gates
-  (>8 mol, >90% N2).
+- **Pump map (this fork's engine, by NAME)**: External Gas to Loop ×2, Gas to
+  Cold Loop + Cold Loop to Gas, **Mix to Gas AND Gas to Mix (both needed —
+  the Gas to Mix pump was found OFF once)**, Gas to Chamber + Gas to Filter,
+  SW filter, column filters (the N2-only one feeds the chamber), TCUs ×2
+  @73.15 K; bypasses + Atmos-to-Loop OFF. Canister port valve: `valve` action
+  toggles, `pressure` sets kPa (4500). Chamber air alarm: vents ext-limit
+  cleared (`excheck val:1`) + external 101 kPa; scrubbers widenet ON, siphon
+  only after CIMS gates (>8 mol, >90% N2).
 - **Crystal radio warnings lag** and Poly the parrot fakes delam alarms —
   trust the CIMS, announce via `:e` only on real trends.
 

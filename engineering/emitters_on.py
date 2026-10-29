@@ -14,9 +14,9 @@ Run: run_script {script: ".../engineering/emitters_on.py",
                  args: {"ids": [111, 222, 333]}}
 Optional: {"off": true} turns emitters OFF instead (delam response: kill the
 beams FIRST, then vent â€” waste scales with energy, so emitters off is always
-step 1). {"verify": {"computer": 35500}} adds a CIMS DELTA CHECK after the
-toggles: reads the CIMS twice via the NtOS console and asserts energy moved
-in the expected direction (ON -> rising, OFF -> falling). NEVER trust clicks
+step 1). {"verify": {"computer": <NtOS console id>}} adds a CIMS DELTA CHECK after the
+toggles: reads the CIMS twice via the NtOS console {"computer": obj_id} and
+asserts energy moved in the expected direction (ON -> rising, OFF -> falling). NEVER trust clicks
 or icons alone: emitter icons look identical on/off, an interrupted click may
 never land (unknown state), and a blind re-click TOGGLES BACK (this script
 was present at both of our delam-track excursions for exactly these reasons).
@@ -70,7 +70,8 @@ if vf.get("computer"):
     def _cims():
         d = (sk.tgui_window(id="tgui-window-1").text or "")
         if "NtosSupermatter" not in d:
-            bot.goto(x=vf.get("x", 152), y=vf.get("y", 150)); _t.sleep(0.4)
+            if vf.get("x") is not None:
+                bot.goto(x=vf["x"], y=vf["y"]); _t.sleep(0.4)
             sk.click(object_id=vf["computer"], expect_name=None); _t.sleep(2.2)
             d = (sk.tgui_window(id="tgui-window-1").text or "")
             if "NtosMain" in d:

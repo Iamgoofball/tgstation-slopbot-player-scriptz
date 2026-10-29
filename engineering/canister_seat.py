@@ -8,9 +8,9 @@ next to the port tile, drag it onto the port tile, then wrench it (wrench from
 toolbelt via belt click) and verify portConnected=1 in the canister tgui.
 
 Run: run_script {script: ".../engineering/canister_seat.py",
-                 args: {"canister": 38315, "port": [166, 151], "wrench": true}}
+                 args: {"canister": <id>, "port": [<x>, <y>], "wrench": true}}
 Optional: {"wrench": false} to only position it. Returns {moved, connected}.
-Wrench must be inside the toolbelt (169154); the script opens it if needed.
+Wrench must be inside the toolbelt; the script opens it if needed.
 """
 import re
 opts = args or {}
@@ -44,8 +44,21 @@ for l in s.split("\n"):
     if re.match(r"- obj %d " % cid, l):
         out["pos"] = l[:140]
 # 6. wrench it in (toolbelt): open belt, click wrench, click canister
+def _belt_id():
+    b = (args or {}).get("belt")
+    if b:
+        return b
+    inv = (sk.inventory().text or "")
+    m = re.search(r"obj (\d+) \"toolbelt\"", inv)
+    if m:
+        return int(m.group(1))
+    s = sk.search(query="toolbelt", in_view=True).text or ""
+    m = re.search(r"obj (\d+) \"toolbelt\"", s)
+    if m:
+        return int(m.group(1))
+    raise SystemExit("no toolbelt found — pass args {'belt': obj_id}")
 if opts.get("wrench", True):
-    c = sk.click(object_id=169154, alt=True, expect_name="toolbelt")
+    c = sk.click(object_id=_belt_id(), alt=True, expect_name="toolbelt")
     time.sleep(1.0)
     bt = (c.text or "")
     m = re.search(r"obj (\d+) \"wrench\"", bt)

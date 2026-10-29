@@ -7,17 +7,24 @@ precheck()
 (alt-click), takes the wrench into the active hand, clicks the target, stows
 the wrench back into the belt.
 
-Run: run_script {script: ".../engineering/wrench.py", args: {"id": 38318}}
-Optional: {"belt": 169154}. Returns {wrenched, target}. Use for canisters on
+Run: run_script {script: ".../engineering/wrench.py", args: {"id": NNNNN}}
+Optional: {"belt": <toolbelt id>}. Returns {wrenched, target}. Use for canisters on
 connector ports (verify with ui_batch: portConnected 1), girders, machines.
 \"\"\""""
 import re
 opts = args or {}
 oid = opts.get("id")
-belt = opts.get("belt") or 169154
+belt = opts.get("belt")
 if not oid:
-    raise ValueError("args: {'id': obj_id, 'belt'?: id}")
+    raise ValueError("args: {'id': obj_id, 'belt'?: id} (belt = toolbelt obj id; "
+                     "ids change every round — find it in your inventory)")
 out = {"id": oid}
+if not belt:
+    inv = (sk.inventory().text or "")
+    m = re.search(r"obj (\d+) \"toolbelt\"", inv)
+    if not m:
+        raise SystemExit("no toolbelt in inventory — pass args {'belt': obj_id}")
+    belt = int(m.group(1))
 bot.goto(object_id=oid, adjacent=True)
 time.sleep(0.3)
 # open the toolbelt

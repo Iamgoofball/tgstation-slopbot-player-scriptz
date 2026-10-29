@@ -14,7 +14,7 @@ the emitter"), pumps/valves (tgui "on"/"power" fields), SMES
 echo verification + a CIMS delta check (cims_watch.py) — icons lie.
 
 Run: run_script {script: ".../engineering/toggle_machine.py",
-                 args: {"id": 40384, "goal": true, "kind": "emitter"}}
+                 args: {"id": NNNNN, "goal": true, "kind": "emitter"}}
 kind: "emitter" (click, echo-verify) | "tgui_field" with
   {"field": "isOperating", "action": "tryinput"} — read field via open tgui
   window, act only if field != goal, re-read to verify.

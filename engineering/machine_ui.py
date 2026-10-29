@@ -10,7 +10,7 @@ Run: run_script {script: ".../engineering/machine_ui.py", args: {"id": 12345}}
 Optional: {"actions": [{"action": "power"}, {"action": "target", "params": {...}}, ...]}
 Returns {win, state_keys, data, acted}. `data` is the window's JSON "data"
 object (compact); compare before/after by running it twice.
-Empty active hand required — a held tool gets used ON the machine instead.
+Empty active hand required â€” a held tool gets used ON the machine instead.
 """
 import json
 import re
@@ -42,7 +42,7 @@ if win:
         out.setdefault("acted", []).append(act["action"])
     # SAFETY WATCHDOG (README section 1): abort on danger after acting
     DANGER = (r"delaminat|integrity|countdown|blast|explod|flood|fire|electroc|shock|causality|warning|emergency")
-    ch = re.sub(r"<[^>]+>", " ", sk.read_chat(wait_s=1).text or "")
+    ch = re.sub(r"<[^>]+>", " ", _pull_chat())
     hits = re.findall(r"[^\n]{0,60}(?:%s)[^\n]{0,60}" % DANGER, ch, re.I)
     if hits:
         raise SystemExit("ABORT danger after acting: %s" % hits[-2:])

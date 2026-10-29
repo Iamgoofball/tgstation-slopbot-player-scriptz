@@ -7,7 +7,7 @@ precheck()
 Opens the PDA (NtOS), runs the "ntcims" program, refreshes, parses sm_data[0].
 
 Run: run_script {script: ".../engineering/cims_read.py",
-                 args: {"pda": 169225}}      # optional: PDA object id
+                 args: {"pda": <obj id>}}     # PDA object id (ids change every round)
 Returns {integrity, energy_gev, temp, temp_limit, moles, n2_pct, o2_pct,
 plasma_pct, zap_mw, factors, ok}. Healthy stable N2 engine: integrity 100,
 energy 1.3-1.6 GeV, temp 70-85 K, 10-20 mol, >=95% N2.
@@ -16,13 +16,26 @@ active hand and presses Z, then restores nothing (leave it in hand).
 """
 import re
 opts = args or {}
-pda = opts.get("pda") or 169225
+pda = opts.get("pda")
+if not pda:
+    inv0 = (sk.inventory().text or "")
+    m = re.search(r"obj (\d+) \"[^\"]*pda", inv0, re.I)
+    if not m:
+        raise ValueError("args: {'pda': obj_id} — ids change every round; "
+                         "no PDA found in inventory")
+    pda = int(m.group(1))
 out = {}
 inv = (sk.inventory().text or "")
 pl = [l for l in inv.split("\n") if "pda" in l.lower()]
 if not pl:
     # PDA not on the mob: open the backpack and click it out
-    sk.click(object_id=174628, alt=True, expect_name="industrial backpack")
+    bpk = opts.get("backpack")
+    if not bpk:
+        m = re.search(r"obj (\d+) \"[^\"]*backpack", inv, re.I)
+        bpk = int(m.group(1)) if m else None
+    if not bpk:
+        raise SystemExit("PDA not worn and no backpack found — pass args {'pda': id, 'backpack': id}")
+    sk.click(object_id=bpk, alt=True, expect_name="backpack")
     time.sleep(1.0)
     c = sk.click(object_id=pda, expect_name=None)
     time.sleep(0.6)
@@ -118,8 +131,12 @@ pl = [l for l in inv.split("\n") if "pda" in l.lower() and "hand" in l]
 if pl:
     if "handactive" not in pl[0]:
         sk.key(key="X"); time.sleep(0.3)
-    bpk = (args or {}).get("backpack", 174628)
-    sk.click(object_id=bpk, expect_name="backpack")
+    bpk = (args or {}).get("backpack")
+    if not bpk:
+        m = re.search(r"obj (\d+) \"[^\"]*backpack", inv, re.I)
+        bpk = int(m.group(1)) if m else None
+    if bpk:
+        sk.click(object_id=bpk, expect_name="backpack")
     time.sleep(0.6)
 RESULT = (out)
 

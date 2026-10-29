@@ -9,8 +9,10 @@ does). Walks to the computer (empty active hand REQUIRED), opens NtosMain,
 runs the ntcims program, parses sm_data[0].
 
 Run: run_script {script: ".../engineering/cims_console.py",
-                 args: {"computer": 35500}}
-Optional: {"x": 152, "y": 150} stand-adjacent tile (buttons work only from
+                 args: {"computer": <NtOS console obj id>}}
+Required: {"computer": obj id of the NtOS engineering console (the one in the
+SMES room — survey_machines.py finds it; ids change every round, never
+hard-code). Optional: {"x","y"} stand-adjacent tile (buttons work only from
 NEXT to the console: 2 tiles away it is VIEW-ONLY, 3-5 disabled).
 Returns {integrity, energy, temp, temp_limit, moles, n2, o2, plasma, ok}.
 Stable healthy N2 engine: integrity 100, temp <= ~85 K, 10-20 mol,
@@ -19,8 +21,11 @@ single reads can't tell healing from destabilizing.
 """
 import re
 opts = args or {}
-cid = opts.get("computer") or opts.get("id") or 35500
-sx, sy = opts.get("x", 152), opts.get("y", 150)
+cid = opts.get("computer") or opts.get("id")
+sx, sy = opts.get("x"), opts.get("y")
+if not cid:
+    raise ValueError("args: {'computer': obj_id} — ids change every round; "
+                     "find the NtOS console with survey_machines.py first")
 out = {"computer": cid}
 
 # close stale windows first: a leftover Smes/APC window would be reused/misread
@@ -39,8 +44,9 @@ act = [l for l in inv.split("\n") if "active_hand" in l]
 if act and "empty" not in act[0]:
     out["note"] = "active hand NOT empty — click may open nothing; trying anyway"
 
-bot.goto(x=sx, y=sy)
-time.sleep(0.4)
+if sx is not None:
+    bot.goto(x=sx, y=sy)
+    time.sleep(0.4)
 c = sk.click(object_id=cid, expect_name=None)
 time.sleep(2.2)
 d = (sk.tgui_window(id="tgui-window-1").text or "")

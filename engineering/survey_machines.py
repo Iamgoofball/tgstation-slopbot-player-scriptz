@@ -27,7 +27,7 @@ seen = {}
 DANGER = (r"delaminat|integrity|countdown|blast|explod|flood|fire|electroc|"
           r"shock|attack|husk|bomb|causality|warning|emergency|toxin")
 def watch(tag=""):
-    ch = re.sub(r"<[^>]+>", " ", sk.read_chat(wait_s=1).text or "")
+    ch = re.sub(r"<[^>]+>", " ", _pull_chat())
     hits = re.findall(r"[^\n]{0,60}(?:%s)[^\n]{0,60}" % DANGER, ch, re.I)
     if hits:
         raise SystemExit("ABORT danger %s: %s" % (tag, hits[-2:]))
